@@ -1,0 +1,63 @@
+---
+swagger: "2.0"
+info:
+  description: This API starts the process of regularly crawling, processing, classifying and storing Tweets. This microservice depends on the microservices ri-storage-twitter, ri-collection-explicit-feedback-twitter, and ri-analytics-classification-twitter
+  version: 1.0
+  title: Orchestrate Tweet microservices
+  contact:
+    email: stanik@informatik.uni-hamburg.de
+schemes:
+  - https
+paths:
+  /hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}:
+    post:
+      summary: Starts the process of regularly crawling, processing, classifying and storing Tweets.
+      description: Stores the account as under observation in the ri-storage-twitter MS, then initiates a CRON job according to the interval for frequent crawling. This MS then gets tweets from ri-collection-explicit-feedback-twitter and classifies them in ri-analytics-classification-twitter. The classified tweets will be stored in ri-storage-twitter.
+      operationId: postObserveTweets
+      produces:
+      - application/json
+      parameters:
+      - name: account_name
+        in: path
+        description: the unique account name of a twitter profile.
+        required: true
+        type: string
+      - name: interval
+        in: path
+        description: how often data should be crawled
+        required: true
+        type: string
+        format: integer
+      - name: lang
+        in: path
+        description: the language the tweet was oficially labeled with
+        required: true
+        type: string
+      responses:
+        200:
+          description: The described process was initiated correctly.
+        400:
+          description: bad input parameter or any microservice is not responding.
+  /hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}:
+    post:
+      summary: Crawl, classify, and store tweets.
+      description: Crawl, classify, and store tweets. This is a one-shot endpoint that does not support frequent crawling.
+      operationId: postProcessTweets
+      produces:
+      - application/json
+      parameters:
+      - name: account_name
+        in: path
+        description: the unique account name of a twitter profile.
+        required: true
+        type: string
+      - name: lang
+        in: path
+        description: the language the tweet was oficially labeled with
+        required: true
+        type: string
+      responses:
+        200:
+          description: The described process was successfull.
+        400:
+          description: bad input parameter or any microservice is not responding.
