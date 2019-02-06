@@ -32,7 +32,7 @@ const (
 var client = getHTTPClient()
 
 func getHTTPClient() *http.Client {
-	caCert, err := ioutil.ReadFile("/ca_chain.crt")
+	caCert, err := ioutil.ReadFile("ca_chain.crt")
 	if err != nil {
 		log.Fatal(err)
 	}
