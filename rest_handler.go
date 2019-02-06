@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"log"
 )
@@ -32,7 +33,12 @@ const (
 var client = getHTTPClient()
 
 func getHTTPClient() *http.Client {
-	caCert, err := ioutil.ReadFile("ca_chain.crt")
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+	caCert, err := ioutil.ReadFile(exPath + "ca_chain.crt")
 	if err != nil {
 		log.Fatal(err)
 	}
