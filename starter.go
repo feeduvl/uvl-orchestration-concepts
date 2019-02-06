@@ -82,8 +82,15 @@ func postProcessTweets(w http.ResponseWriter, r *http.Request) {
 	lang := params["lang"]
 	fast := params["fast"]
 
+	w.Header().Set("Content-Type", "application/json")
+	if accountName == "" || lang == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ResponseMessage{Status: false, Message: "account name or language are empty"})
+		return
+	}
+
 	processTweets(accountName, lang, fast)
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "observation successfully initiated"})
+	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "tweets successfully processed"})
 }
