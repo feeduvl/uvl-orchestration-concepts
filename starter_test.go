@@ -106,8 +106,13 @@ func MockPostObserveTweets(w http.ResponseWriter, r *http.Request) {
 		"it": true,
 	}
 	allowedSpcialIntervals := map[string]bool{
-		"6h": true,
-		"2h": true,
+		"minutely": true,
+		"hourly":   true,
+		"daily":    true,
+		"weekly":   true,
+		"monthly":  true,
+		"6h":       true,
+		"2h":       true,
 	}
 	_, err := cron.Parse(interval)
 	if accountName == "" || !allowedLanguages[lang] || (err != nil && !allowedSpcialIntervals[interval]) {
