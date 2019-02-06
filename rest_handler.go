@@ -61,7 +61,7 @@ func RESTPostStoreObserveTwitterAccount(obserable ObservableTwitter) bool {
 	url := baseURL + endpointPostObserveTwitterAccount
 	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
 	if err != nil {
-		log.Printf("ERR %v\n", err)
+		log.Printf("ERR post store observable %v\n", err)
 	}
 	if res.StatusCode == 200 {
 		return true
@@ -77,13 +77,13 @@ func RESTGetObservablesTwitterAccounts() []ObservableTwitter {
 	url := baseURL + endpointGetObservablesTwitterAccounts
 	res, err := client.Get(url)
 	if err != nil {
-		fmt.Println("ERR", err)
+		fmt.Println("ERR cannot send observable account get request", err)
 		return obserables
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&obserables)
 	if err != nil {
-		fmt.Println("ERR", err)
+		fmt.Println("ERR cannot decode twitter observable json", err)
 		return obserables
 	}
 
@@ -98,13 +98,13 @@ func RESTGetCrawlTweets(accountName string, lang string) []Tweet {
 	url := baseURL + endpoint
 	res, err := client.Get(url)
 	if err != nil {
-		fmt.Println("ERR", err)
+		fmt.Println("ERR cannot send request to tweet crawler", err)
 		return tweets
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&tweets)
 	if err != nil {
-		fmt.Println("ERR", err)
+		fmt.Println("ERR cannot decode crawled tweets", err)
 		return tweets
 	}
 
@@ -118,13 +118,13 @@ func RESTGetCrawlMaximumNumberOfTweets(accountName string, lang string) []Tweet 
 	url := baseURL + endpoint
 	res, err := client.Get(url)
 	if err != nil {
-		fmt.Println("ERR", err)
+		fmt.Println("ERR crawl max number of tweets", err)
 		return tweets
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&tweets)
 	if err != nil {
-		fmt.Println("ERR", err)
+		fmt.Println("ERR cannot decode tweets", err)
 		return tweets
 	}
 
@@ -149,7 +149,7 @@ func RESTPostClassifyTweets(tweets []Tweet, lang string) []Tweet {
 
 	err = json.NewDecoder(res.Body).Decode(&classifiedTweets)
 	if err != nil {
-		log.Printf("ERR %v\n", err)
+		log.Printf("ERR cannot decode classified tweets %v\n", err)
 	}
 
 	return classifiedTweets
@@ -166,7 +166,7 @@ func RESTPostStoreTweets(tweets []Tweet) bool {
 	url := baseURL + endpointPostTweet
 	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
 	if err != nil {
-		log.Printf("ERR %v\n", err)
+		log.Printf("ERR cannot send request to store tweets %v\n", err)
 	}
 	if res.StatusCode == 200 {
 		return true
