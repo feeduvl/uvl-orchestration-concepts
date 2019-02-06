@@ -1,12 +1,9 @@
-== ri-orchestration-twitter Integration image:https://img.shields.io/badge/License-EPL%202.0-blue.svg["EPL 2.0", link="https://www.eclipse.org/legal/epl-2.0/"]
+== ri-orchestration-twitter image:https://img.shields.io/badge/License-EPL%202.0-blue.svg["EPL 2.0", link="https://www.eclipse.org/legal/epl-2.0/"]
 
 This microservice was created as a result of the OpenReq project funded by the European Union Horizon 2020 Research and Innovation programme under grant agreement No 732463.
 
-== Used Technologies
-- Go (-> https://github.com/golang/go)
-- Gorilla Mux (-> https://github.com/gorilla/mux)
-
-== Functionalities 
+== Technical description
+=== What does the microservice do
 This microservice is responsible for the coordination of all microservices dealing with Twitter data. The main goal of this microservice is to define Twitter accounts that should be continuously observed. In its current state, the microservice first initiates a recurring crawling, classification, and finally storing process of tweets that mention a given account. To achieve this, this miroservice calls the following microservices of OpenReq:
 
 - Crawler: link:https://github.com/OpenReqEU/ri-collection-explicit-feedback-twitter[ri-collection-explicit-feedback-twitter]
@@ -15,25 +12,35 @@ This microservice is responsible for the coordination of all microservices deali
 
 These microservices must be configured and running in order to use ri-orchestration-twitter.
 
-== Installation
+=== Which technologies are used
+- Go (-> https://github.com/golang/go)
+- Gorilla Mux (-> https://github.com/gorilla/mux)
+
+=== How to install it
 - setup and start the microservices: link:https://github.com/OpenReqEU/ri-collection-explicit-feedback-twitter[ri-collection-explicit-feedback-twitter]
 , link:https://github.com/OpenReqEU/ri-analytics-classification-twitter[ri-analytics-classification-twitter], link:https://github.com/OpenReqEU/ri-storage-twitter[ri-storage-twitter]
 
 
 - Define a shared base url of all the three previously mentioned microservices called  *BASE_URL*. BASE_URL will be used as an environment variable in the Docker run command (See following section).
 
-== How to Run The microservice
+
 Run the following commands to start the microservice:
 
-1) docker build -t ri-orchestration-twitter .
-2) docker run -e "BASE_URL=<BASE_URL_OF_THE_REQUIRED_MICROSERVICES>" -p 9703:9703 ri-orchestration-twitter
+. docker build -t ri-orchestration-twitter .
+
+. docker run -e "BASE_URL=<BASE_URL_OF_THE_REQUIRED_MICROSERVICES>" -p 9703:9703 ri-orchestration-twitter
 
 
-== Public APIs
+=== How to use it (high-level description)
 The API is documented by using Swagger2:
 
 - link:http://217.172.12.199/registry/#/services/ri-orchestration-twitter[Rendered Documentation]
 
+=== Notes for developers 
+None.
+
+=== Sources
+None.
 
 == How to contribute
 See OpenReq project contribution link:[guidelines]
