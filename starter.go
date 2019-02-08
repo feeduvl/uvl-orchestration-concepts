@@ -21,11 +21,6 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObserveTweets).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
-	router.PathPrefix("/dashboard").Handler(http.StripPrefix("/dashboard", http.FileServer(http.Dir("./html/main/"))))
-	router.PathPrefix("/comparison").Handler(http.StripPrefix("/comparison", http.FileServer(http.Dir("./html/main/"))))
-	router.PathPrefix("/tweets").Handler(http.StripPrefix("/tweets", http.FileServer(http.Dir("./html/main/"))))
-	router.PathPrefix("/labeling").Handler(http.StripPrefix("/labeling", http.FileServer(http.Dir("./html/main/"))))
-	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./html/main/"))))
 
 	// restart observation here? In case this MS needs to be restarted
 	fmt.Println("Restart the Observation")
