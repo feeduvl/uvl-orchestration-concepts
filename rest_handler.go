@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"log"
 )
@@ -34,6 +35,7 @@ var client = getHTTPClient()
 func getHTTPClient() *http.Client {
 	pwd, _ := os.Getwd()
 	caCert, err := ioutil.ReadFile(pwd + "/ca_chain.crt")
+	timeout := time.Duration(2 * time.Minute)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,6 +48,7 @@ func getHTTPClient() *http.Client {
 				RootCAs: caCertPool,
 			},
 		},
+		Timeout: timeout,
 	}
 
 	return client
