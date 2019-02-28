@@ -109,7 +109,7 @@ func chunkTweets(tweets []Tweet) [][]Tweet {
 		tweets = tweets[:len(tweets)-1]
 		chunk = append(chunk, a)
 
-		if len(chunk) == 50 {
+		if len(chunk) == 25 {
 			c := make([]Tweet, len(chunk))
 			copy(c, chunk)
 			chunks = append(chunks, c)
