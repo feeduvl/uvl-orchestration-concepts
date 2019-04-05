@@ -25,7 +25,8 @@ func startObsevation() {
 
 			fmt.Printf("2.3.0 crawl tweets %s \n", observationInterval)
 			crawledTweets := crawlObservableTweets(observable.AccountName, observable.Lang)
-			fmt.Printf("2.3.1 crawled tweets: %v for %v \n", len(crawledTweets), observable.AccountName)
+			storeCrawledTweets(crawledTweets)
+			fmt.Printf("2.3.1 crawled and stored tweets: %v for %v \n", len(crawledTweets), observable.AccountName)
 			if len(crawledTweets) == 0 {
 				continue
 			}
@@ -33,7 +34,7 @@ func startObsevation() {
 			fmt.Printf("2.3.2 classify and store tweets \n")
 			for _, chunkOfTweets := range chunkTweets(crawledTweets) {
 				classifiedTweets := classifyTweets(chunkOfTweets, observable.Lang)
-				storeCrawledTweets(classifiedTweets)
+				storeClassifiedTweets(classifiedTweets)
 			}
 			fmt.Printf("2.3.3 tweets classified and stored \n")
 		}
@@ -53,12 +54,13 @@ func processTweets(accountName, lang, fast string) {
 	} else {
 		crawledTweets = RESTGetCrawlMaximumNumberOfTweets(accountName, lang)
 	}
-	fmt.Printf("1.2. crawled %v tweets: \n\n", len(crawledTweets))
+	storeCrawledTweets(crawledTweets)
+	fmt.Printf("1.2. crawled and stored %v tweets: \n\n", len(crawledTweets))
 
 	fmt.Printf("2.1. classify and store tweets: \n")
 	for _, chunkOfTweets := range chunkTweets(crawledTweets) {
 		classifiedTweets := classifyTweets(chunkOfTweets, lang)
-		storeCrawledTweets(classifiedTweets)
+		storeClassifiedTweets(classifiedTweets)
 	}
 	fmt.Printf("3.2 tweets classified and stored \n\n")
 }
@@ -126,6 +128,10 @@ func classifyTweets(tweets []Tweet, lang string) []Tweet {
 
 func storeCrawledTweets(crawledTweets []Tweet) {
 	RESTPostStoreTweets(crawledTweets)
+}
+
+func storeClassifiedTweets(classifiedTweets []Tweet) {
+	RESTPostStoreClassifiedTweets(classifiedTweets)
 }
 
 // RestartObservation stops the observation and starts it again

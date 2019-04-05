@@ -28,6 +28,7 @@ const (
 	endpointPostObserveTwitterAccount     = "/ri-storage-twitter/store/observable/"
 	endpointGetObservablesTwitterAccounts = "/ri-storage-twitter/observables"
 	endpointPostTweet                     = "/ri-storage-twitter/store/tweet/"
+	endpointPostClassifiedTweet           = "/ri-storage-twitter/store/classified/tweet/"
 )
 
 var client = getHTTPClient()
@@ -168,6 +169,26 @@ func RESTPostStoreTweets(tweets []Tweet) bool {
 	}
 
 	url := baseURL + endpointPostTweet
+	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
+	if err != nil {
+		log.Printf("ERR cannot send request to store tweets %v\n", err)
+	}
+	if res.StatusCode == 200 {
+		return true
+	}
+
+	return false
+}
+
+// RESTPostStoreClassifiedTweets returns ok
+func RESTPostStoreClassifiedTweets(tweets []Tweet) bool {
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(tweets)
+	if err != nil {
+		log.Printf("ERR - json formatting error: %v\n", err)
+	}
+
+	url := baseURL + endpointPostClassifiedTweet
 	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweets %v\n", err)
