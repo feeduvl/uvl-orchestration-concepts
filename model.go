@@ -16,6 +16,7 @@ type Tweet struct {
 	SentimentScore      int      `json:"sentiment_score" bson:"sentiment_score"`
 	TweetClass          string   `json:"tweet_class"`
 	ClassifierCertainty int      `json:"classifier_certainty"`
+	Annotated           bool     `json:"is_annotated" bson:"is_annotated"`
 }
 
 // TwitterAccount model
