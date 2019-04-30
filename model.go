@@ -19,11 +19,6 @@ type Tweet struct {
 	Annotated           bool     `json:"is_annotated" bson:"is_annotated"`
 }
 
-// TwitterAccount model
-type TwitterAccount struct {
-	Names []string `json:"twitter_account_names" bson:"twitter_account_names"`
-}
-
 // ObservableTwitter model
 type ObservableTwitter struct {
 	AccountName string `json:"account_name"`
