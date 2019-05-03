@@ -27,6 +27,7 @@ const (
 	// storage layer
 	endpointPostObserveTwitterAccount     = "/ri-storage-twitter/store/observable/"
 	endpointGetObservablesTwitterAccounts = "/ri-storage-twitter/observables"
+	endpointGetUnclassifiedTweets         = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
 	endpointPostTweet                     = "/ri-storage-twitter/store/tweet/"
 	endpointPostClassifiedTweet           = "/ri-storage-twitter/store/classified/tweet/"
 )
@@ -93,6 +94,27 @@ func RESTGetObservablesTwitterAccounts() []ObservableTwitter {
 	}
 
 	return obserables
+}
+
+// RESTGetUnclassifiedTweets retrieve all tweets from a specified account that have not been classified yet
+func RESTGetUnclassifiedTweets(accountName, lang string) []Tweet {
+	var tweet []Tweet
+
+	endpoint := fmt.Sprintf(endpointGetUnclassifiedTweets, accountName, lang)
+	url := baseURL + endpoint
+	res, err := client.Get(url)
+	if err != nil {
+		fmt.Println("ERR cannot send get request to get unclassified tweets", err)
+		return tweet
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&tweet)
+	if err != nil {
+		fmt.Println("ERR cannot decode unclassified tweets json", err)
+		return tweet
+	}
+
+	return tweet
 }
 
 // RESTGetCrawlTweets retrieve all tweets from the collection layer that addresses the given account name

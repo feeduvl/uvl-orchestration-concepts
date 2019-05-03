@@ -134,6 +134,24 @@ func storeClassifiedTweets(classifiedTweets []Tweet) {
 	RESTPostStoreClassifiedTweets(classifiedTweets)
 }
 
+func RetrieveAndProcessUnclassifiedTweets() {
+	fmt.Printf("1.0. RetrieveAndProcessUnclassifiedTweets \n")
+	for _, observable := range RESTGetObservablesTwitterAccounts() {
+		fmt.Printf("1.1. get unclassified tweets for %v in lang %v \n", observable.AccountName, observable.Lang)
+		tweets := RESTGetUnclassifiedTweets(observable.AccountName, observable.Lang)
+		if len(tweets) == 0 {
+			fmt.Printf("1.1.1 no unclassfied tweetsfound\n")
+			continue
+		}
+		fmt.Printf("1.2. classify and store %v tweets: \n", len(tweets))
+		for _, chunkOfTweets := range chunkTweets(tweets) {
+			classifiedTweets := classifyTweets(chunkOfTweets, observable.Lang)
+			storeClassifiedTweets(classifiedTweets)
+		}
+		fmt.Printf("1.3 tweets classified and stored \n\n")
+	}
+}
+
 // RestartObservation stops the observation and starts it again
 func RestartObservation() {
 	if observer != nil {
