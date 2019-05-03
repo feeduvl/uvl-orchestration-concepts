@@ -8,6 +8,7 @@ import (
 
 var observableTwitterAccounts = NewSet()
 var observer *cron.Cron
+var observerUnclassifiedTweets *cron.Cron
 
 func startObsevation() {
 	fmt.Println("2.1 initiate observation")
@@ -86,6 +87,8 @@ func getObserverInterval(interval string) string {
 		return "@hourly"
 	case "daily":
 		return "@daily"
+	case "midnight":
+		return "@midnight"
 	case "weekly":
 		return "@weekly"
 	case "monthly":
@@ -134,8 +137,19 @@ func storeClassifiedTweets(classifiedTweets []Tweet) {
 	RESTPostStoreClassifiedTweets(classifiedTweets)
 }
 
-func RetrieveAndProcessUnclassifiedTweets() {
-	fmt.Printf("1.0. RetrieveAndProcessUnclassifiedTweets \n")
+func ObserveUnclassifiedTweets() {
+	observerUnclassifiedTweets = cron.New()
+	err := observerUnclassifiedTweets.AddFunc(getObserverInterval("midnight"), func() {
+		retrieveAndProcessUnclassifiedTweets()
+	})
+	if err != nil {
+		fmt.Println("ERR - could not add the observer for unclassified tweets", err)
+	}
+	observerUnclassifiedTweets.Start()
+}
+
+func retrieveAndProcessUnclassifiedTweets() {
+	fmt.Printf("1.0. retrieveAndProcessUnclassifiedTweets \n")
 	for _, observable := range RESTGetObservablesTwitterAccounts() {
 		fmt.Printf("1.1. get unclassified tweets for %v in lang %v \n", observable.AccountName, observable.Lang)
 		tweets := RESTGetUnclassifiedTweets(observable.AccountName, observable.Lang)
@@ -150,6 +164,7 @@ func RetrieveAndProcessUnclassifiedTweets() {
 		}
 		fmt.Printf("1.3 tweets classified and stored \n\n")
 	}
+	fmt.Printf("1.4. done retrieveAndProcessUnclassifiedTweets \n")
 }
 
 // RestartObservation stops the observation and starts it again
