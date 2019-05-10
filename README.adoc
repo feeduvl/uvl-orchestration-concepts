@@ -38,7 +38,30 @@ The API is documented by using Swagger2:
 - link:http://217.172.12.199/registry/#/services/ri-orchestration-twitter[Rendered Documentation]
 
 === Notes for developers 
-None.
+This mircoservices orchestrates the communication between several other microservices (crawler, classifier, and storage).
+The code currently assumes that all these microservices are behind a reverse proxy.
+Therefore, the class `rest_handler.go` does not specify any ports.
+In case you decide to deploy those micoservices without a reverse proxy, we suggest to add the proxies to the endpoints in `rest_handler.go`. 
+
+.rest_handler.go
+[source,go]
+----
+const (
+	// analytics layer
+	endpointPostClassificationTwitter = "/ri-analytics-classification-twitter/lang/"
+
+	// collection layer
+	endpointGetCrawlTweets             = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
+	endpointGetCrawlAllAvailableTweets = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s"
+
+	// storage layer
+	endpointPostObserveTwitterAccount     = "/ri-storage-twitter/store/observable/"
+	endpointGetObservablesTwitterAccounts = "/ri-storage-twitter/observables"
+	endpointGetUnclassifiedTweets         = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
+	endpointPostTweet                     = "/ri-storage-twitter/store/tweet/"
+	endpointPostClassifiedTweet           = "/ri-storage-twitter/store/classified/tweet/"
+)
+----
 
 === Sources
 None.
