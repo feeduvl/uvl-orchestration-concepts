@@ -37,7 +37,7 @@ func (s *set) Contains(key string) bool {
 func (s *set) String() string {
 	var keys []string
 	for key := range s.m {
-		log := fmt.Sprintf("key: %s | value: %s \t", key, s.m[key])
+		log := fmt.Sprintf("%s ", s.m[key])
 		keys = append(keys, log)
 	}
 
