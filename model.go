@@ -31,3 +31,8 @@ type ResponseMessage struct {
 	Message string `json:"message"`
 	Status  bool   `json:"status"`
 }
+
+type CrawlerResponseMessage struct {
+	AccountExists bool   `json:"account_exists"`
+	Message       string `json:"message"`
+}

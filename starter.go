@@ -79,6 +79,14 @@ func postProcessTweets(w http.ResponseWriter, r *http.Request) {
 	fast := params["fast"]
 
 	w.Header().Set("Content-Type", "application/json")
+
+	crawlerResponseMessage := RESTGetTwitterAccountNameExists(accountName)
+	if !crawlerResponseMessage.AccountExists {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(crawlerResponseMessage)
+		return
+	}
+
 	if accountName == "" || lang == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(ResponseMessage{Status: false, Message: "account name or language are empty"})

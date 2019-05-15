@@ -21,8 +21,9 @@ const (
 	endpointPostClassificationTwitter = "/ri-analytics-classification-twitter/lang/"
 
 	// collection layer
-	endpointGetCrawlTweets             = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
-	endpointGetCrawlAllAvailableTweets = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s"
+	endpointGetCrawlTweets              = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
+	endpointGetCrawlAllAvailableTweets  = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s"
+	endpointGetTwitterAccountNameExists = "/ri-collection-explicit-feedback-twitter/%s/exists"
 
 	// storage layer
 	endpointPostObserveTwitterAccount     = "/ri-storage-twitter/store/observable/"
@@ -94,6 +95,27 @@ func RESTGetObservablesTwitterAccounts() []ObservableTwitter {
 	}
 
 	return obserables
+}
+
+// RESTGetTwitterAccountNameExists check if a twitter account exists
+func RESTGetTwitterAccountNameExists(accountName string) CrawlerResponseMessage {
+	var response CrawlerResponseMessage
+
+	endpoint := fmt.Sprintf(endpointGetTwitterAccountNameExists, accountName)
+	url := baseURL + endpoint
+	res, err := client.Get(url)
+	if err != nil {
+		fmt.Println("ERR cannot send get request to check if Twitter account exists", err)
+		return response
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		fmt.Println("ERR cannot decode response from the twitter crawler json", err)
+		return response
+	}
+
+	return response
 }
 
 // RESTGetUnclassifiedTweets retrieve all tweets from a specified account that have not been classified yet
