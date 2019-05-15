@@ -34,9 +34,9 @@ func main() {
 * This method calls for each step the responsible MS
 *
 * Steps:
-*  1. store twitter account to to observe
-*  2. notify the observer (crawler)
-*  2.1 notify the processing layer to classify the newly addded tweets
+*  1. check if twitter account exists
+*  2. store twitter account to to observe
+*  3. notify the observer (crawler)
  */
 func postObserveTweets(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -46,9 +46,17 @@ func postObserveTweets(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("1.0 postObserveTweets called with accountName: %s, interval: %s, lang: %s \n", accountName, interval, lang)
 
-	// 1. store app to observe
-	ok := RESTPostStoreObserveTwitterAccount(ObservableTwitter{AccountName: accountName, Interval: interval, Lang: lang})
 	w.Header().Set("Content-Type", "application/json")
+	// 1. check if twitter account exists
+	crawlerResponseMessage := RESTGetTwitterAccountNameExists(accountName)
+	if !crawlerResponseMessage.AccountExists {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(crawlerResponseMessage)
+		return
+	}
+
+	// 2. store app to observe
+	ok := RESTPostStoreObserveTwitterAccount(ObservableTwitter{AccountName: accountName, Interval: interval, Lang: lang})
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ResponseMessage{Status: false, Message: "storage layer unreachable"})
@@ -57,7 +65,7 @@ func postObserveTweets(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("1.1 restart observation \n")
 
-	// 2. notify the observer (crawler)
+	// 3. notify the observer (crawler)
 	RestartObservation()
 
 	w.WriteHeader(http.StatusOK)
