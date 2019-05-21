@@ -76,11 +76,12 @@ func RemoveObservable(accountName string) bool {
 	fmt.Printf("[%s] 2.1: removeObserver\n", accountName)
 	if _, observableExists := observableManager[accountName]; observableExists {
 		observableManager[accountName].CronJob.Stop()
+		ok := RESTDeleteObservablesTwitterAccounts(observableManager[accountName].Observable)
+
 		delete(observableManager, accountName)
-		return RESTDeleteObservablesTwitterAccounts(observableManager[accountName].Observable)
+		return ok
 	}
 
-	fmt.Printf("[%s] 2.2: observer removed\n", accountName)
 	return false
 }
 
