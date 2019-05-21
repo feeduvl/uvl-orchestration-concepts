@@ -1,5 +1,7 @@
 package main
 
+import "github.com/robfig/cron"
+
 // Tweet model
 type Tweet struct {
 	CreatedAt           int      `json:"created_at"`
@@ -24,6 +26,19 @@ type ObservableTwitter struct {
 	AccountName string `json:"account_name"`
 	Interval    string `json:"interval"`
 	Lang        string `json:"lang"`
+}
+
+func (o ObservableTwitter) isIdentical(accountName, interval, lang string) bool {
+	if o.AccountName == accountName && o.Interval == interval && o.Lang == lang {
+		return true
+	}
+	return false
+}
+
+// ObservableTwitterManager model
+type ObservableTwitterManager struct {
+	Observable ObservableTwitter
+	CronJob    *cron.Cron
 }
 
 // ResponseMessage model

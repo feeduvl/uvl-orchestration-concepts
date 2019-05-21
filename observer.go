@@ -6,44 +6,84 @@ import (
 	"github.com/robfig/cron"
 )
 
-var observableTwitterAccounts = NewSet()
+var observableManager map[string]ObservableTwitterManager
 var observer *cron.Cron
 var observerUnclassifiedTweets *cron.Cron
+var observables = NewSet()
 
-func startObsevation() {
+func InitObservation() {
 	fmt.Println("2.1 initiate observation")
-	loadObservableTwitterAccounts()
+	observableManager = make(map[string]ObservableTwitterManager)
 
-	// TODO: consider a real interval in the future. ATM I have to take a fixed interval and start the process
-	// for alll accounts and tweets in sequential order, because the classification MS cannot handle simultaneuos
-	// requests ATM
-	observationInterval := getObserverInterval("2h")
+	loadObservables()
 	observer = cron.New()
-	err := observer.AddFunc(observationInterval, func() {
-		fmt.Printf("cron job triggered")
-		for accountName := range observableTwitterAccounts.m {
-			observable := observableTwitterAccounts.m[accountName]
 
-			fmt.Printf("2.3.0 crawl tweets %s \n", observationInterval)
-			crawledTweets := crawlObservableTweets(observable.AccountName, observable.Lang)
-			storeCrawledTweets(crawledTweets)
-			fmt.Printf("2.3.1 crawled and stored tweets: %v for %v \n", len(crawledTweets), observable.AccountName)
-			if len(crawledTweets) == 0 {
-				continue
-			}
-
-			fmt.Printf("2.3.2 classify and store tweets \n")
-			for _, chunkOfTweets := range chunkTweets(crawledTweets) {
-				classifiedTweets := classifyTweets(chunkOfTweets, observable.Lang)
-				storeClassifiedTweets(classifiedTweets)
-			}
-			fmt.Printf("2.3.3 tweets classified and stored \n")
+	for accountName := range observables.m {
+		if _, ok := observableManager[accountName]; ok {
+			continue //
 		}
-	})
-	if err != nil {
-		fmt.Println("ERR - could not add the observer", err)
+		AddObservable(observables.m[accountName])
 	}
 	observer.Start()
+}
+
+func AddObservable(observable ObservableTwitter) {
+	// observableManager := make(map[string]ObservableTwitterManager)
+
+	fmt.Printf("[%s] 2.2: add observer\n", observable.AccountName)
+	accountName := observable.AccountName
+	lang := observable.Lang
+	interval := observable.Interval
+
+	if o, observableAlreadyExists := observableManager[accountName]; observableAlreadyExists {
+		if o.Observable.isIdentical(accountName, interval, lang) {
+			fmt.Printf("[%s] 2.2.1: identical observervable already exists\n", accountName)
+			return // cronjob for identical observable already started
+		} else {
+			fmt.Printf("[%s] 2.2.2: observervable needs to be updated\n", accountName)
+			// configuration for a cronjob changed and needs to be updated
+			o.CronJob.Stop()
+		}
+	}
+
+	observableManager[accountName] = ObservableTwitterManager{
+		Observable: observable,
+		CronJob:    cron.New(),
+	}
+
+	fmt.Printf("[%s] 2.2.3: add cron job\n", accountName)
+	err := observableManager[accountName].CronJob.AddFunc(getObserverInterval(interval), func() {
+		fmt.Printf("[%s] 2.3: crawl tweets\n", accountName)
+		crawledTweets := crawlObservableTweets(accountName, lang)
+		storeCrawledTweets(crawledTweets)
+		fmt.Printf("[%s] 2.4: crawled and stored tweets: %v\n", accountName, len(crawledTweets))
+		if len(crawledTweets) == 0 {
+			return
+		}
+
+		fmt.Printf("[%s] 2.5: classify and store tweets \n", accountName)
+		for _, chunkOfTweets := range chunkTweets(crawledTweets) {
+			classifiedTweets := classifyTweets(chunkOfTweets, lang)
+			storeClassifiedTweets(classifiedTweets)
+		}
+		fmt.Printf("[%s] 2.6: tweets classified and stored\n", accountName)
+	})
+	if err != nil {
+		fmt.Printf("ERR - could not add %s as observer\nGot error: %v\n---\n", accountName, err)
+	}
+	observableManager[accountName].CronJob.Start()
+}
+
+func RemoveObservable(accountName string) bool {
+	fmt.Printf("[%s] 2.1: removeObserver\n", accountName)
+	if _, observableExists := observableManager[accountName]; observableExists {
+		observableManager[accountName].CronJob.Stop()
+		delete(observableManager, accountName)
+		return RESTDeleteObservablesTwitterAccounts(observableManager[accountName].Observable)
+	}
+
+	fmt.Printf("[%s] 2.2: observer removed\n", accountName)
+	return false
 }
 
 func processTweets(accountName, lang, fast string) {
@@ -66,17 +106,12 @@ func processTweets(accountName, lang, fast string) {
 	fmt.Printf("3.2 tweets classified and stored \n\n")
 }
 
-func stopObservation() {
-	fmt.Printf("2.0 stop observation \n")
-	observer.Stop()
-}
-
-func loadObservableTwitterAccounts() {
-	observableTwitterAccounts = NewSet()
+func loadObservables() {
+	observables = NewSet()
 	for _, observable := range RESTGetObservablesTwitterAccounts() {
-		observableTwitterAccounts.Add(observable.AccountName, observable)
+		observables.Add(observable.AccountName, observable)
 	}
-	fmt.Printf("2.2 loadObservableTwitterAccounts lead to these accounts: %v \n", observableTwitterAccounts)
+	fmt.Printf("2.2 loadObservables lead to these accounts: %v \n", observables)
 }
 
 func getObserverInterval(interval string) string {
@@ -165,12 +200,4 @@ func retrieveAndProcessUnclassifiedTweets() {
 		fmt.Printf("1.3 tweets classified and stored \n\n")
 	}
 	fmt.Printf("1.4. done retrieveAndProcessUnclassifiedTweets \n")
-}
-
-// RestartObservation stops the observation and starts it again
-func RestartObservation() {
-	if observer != nil {
-		stopObservation()
-	}
-	startObsevation()
 }

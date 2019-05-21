@@ -19,13 +19,15 @@ func main() {
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"})
 
 	router := mux.NewRouter()
-	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObserveTweets).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObservableTwitterAccount).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/twitter/observe/account/{account_name}", postDeleteObservableTwitterAccount).Methods("DELETE")
 	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
 
 	// restart observation here? In case this MS needs to be restarted
-	fmt.Println("Restart the Observation")
-	go RestartObservation()
+	fmt.Println("Init the Observation")
+	go InitObservation()
 	go ObserveUnclassifiedTweets()
+
 	fmt.Println("MS started")
 	log.Fatal(http.ListenAndServe(":9703", handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(router)))
 }
@@ -36,9 +38,9 @@ func main() {
 * Steps:
 *  1. check if twitter account exists
 *  2. store twitter account to to observe
-*  3. notify the observer (crawler)
+*  3. add the observer (crawler)
  */
-func postObserveTweets(w http.ResponseWriter, r *http.Request) {
+func postObservableTwitterAccount(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	accountName := params["account_name"]
 	interval := params["interval"] // possible intervals: minutely, hourly, daily, monthly
@@ -50,13 +52,16 @@ func postObserveTweets(w http.ResponseWriter, r *http.Request) {
 	// 1. check if twitter account exists
 	crawlerResponseMessage := RESTGetTwitterAccountNameExists(accountName)
 	if !crawlerResponseMessage.AccountExists {
+		fmt.Printf("1.1 observable %s already exists. The system will not be updated.\n", accountName)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(crawlerResponseMessage)
 		return
 	}
 
+	observable := ObservableTwitter{AccountName: accountName, Interval: interval, Lang: lang}
+
 	// 2. store app to observe
-	ok := RESTPostStoreObserveTwitterAccount(ObservableTwitter{AccountName: accountName, Interval: interval, Lang: lang})
+	ok := RESTPostStoreObserveTwitterAccount(observable)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ResponseMessage{Status: false, Message: "storage layer unreachable"})
@@ -65,11 +70,24 @@ func postObserveTweets(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("1.1 restart observation \n")
 
-	// 3. notify the observer (crawler)
-	RestartObservation()
+	// 3. add the observer (crawler)
+	AddObservable(observable)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "observation successfully initiated"})
+}
+
+func postDeleteObservableTwitterAccount(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	accountName := params["account_name"]
+
+	fmt.Printf("1.0 postDeleteObservableTwitterAccount called for %v \n", accountName)
+
+	// 3. add the observer (crawler)
+	RemoveObservable(accountName)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }
 
 /*

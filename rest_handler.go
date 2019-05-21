@@ -26,11 +26,12 @@ const (
 	endpointGetTwitterAccountNameExists = "/ri-collection-explicit-feedback-twitter/%s/exists"
 
 	// storage layer
-	endpointPostObserveTwitterAccount     = "/ri-storage-twitter/store/observable/"
-	endpointGetObservablesTwitterAccounts = "/ri-storage-twitter/observables"
-	endpointGetUnclassifiedTweets         = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
-	endpointPostTweet                     = "/ri-storage-twitter/store/tweet/"
-	endpointPostClassifiedTweet           = "/ri-storage-twitter/store/classified/tweet/"
+	endpointPostObserveTwitterAccount        = "/ri-storage-twitter/store/observable/"
+	endpointGetObservablesTwitterAccounts    = "/ri-storage-twitter/observables"
+	endpointDeleteObservablesTwitterAccounts = "/ri-storage-twitter/observables"
+	endpointGetUnclassifiedTweets            = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
+	endpointPostTweet                        = "/ri-storage-twitter/store/tweet/"
+	endpointPostClassifiedTweet              = "/ri-storage-twitter/store/classified/tweet/"
 )
 
 var client = getHTTPClient()
@@ -70,11 +71,9 @@ func RESTPostStoreObserveTwitterAccount(obserable ObservableTwitter) bool {
 	if err != nil {
 		log.Printf("ERR post store observable %v\n", err)
 	}
-	if res.StatusCode == 200 {
-		return true
-	}
+	defer res.Body.Close()
 
-	return false
+	return res.StatusCode == 200
 }
 
 // RESTGetObservablesTwitterAccounts retrieve all observables from the storage layer
@@ -87,6 +86,7 @@ func RESTGetObservablesTwitterAccounts() []ObservableTwitter {
 		fmt.Println("ERR cannot send observable account get request", err)
 		return obserables
 	}
+	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&obserables)
 	if err != nil {
@@ -95,6 +95,29 @@ func RESTGetObservablesTwitterAccounts() []ObservableTwitter {
 	}
 
 	return obserables
+}
+
+// RESTDeleteObservablesTwitterAccounts returns ok
+func RESTDeleteObservablesTwitterAccounts(observable ObservableTwitter) bool {
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(observable)
+	if err != nil {
+		log.Printf("ERR - json formatting error: %v\n", err)
+	}
+
+	url := baseURL + endpointDeleteObservablesTwitterAccounts
+	req, err := http.NewRequest("DELETE", url, requestBody)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR cannot send request to delte observable %v\n", err)
+	}
+	defer res.Body.Close()
+
+	return res.StatusCode == 200
 }
 
 // RESTGetTwitterAccountNameExists check if a twitter account exists
@@ -108,6 +131,7 @@ func RESTGetTwitterAccountNameExists(accountName string) CrawlerResponseMessage 
 		fmt.Println("ERR cannot send get request to check if Twitter account exists", err)
 		return response
 	}
+	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
@@ -129,6 +153,7 @@ func RESTGetUnclassifiedTweets(accountName, lang string) []Tweet {
 		fmt.Println("ERR cannot send get request to get unclassified tweets", err)
 		return tweet
 	}
+	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&tweet)
 	if err != nil {
@@ -150,6 +175,7 @@ func RESTGetCrawlTweets(accountName string, lang string) []Tweet {
 		fmt.Println("ERR cannot send request to tweet crawler", err)
 		return tweets
 	}
+	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&tweets)
 	if err != nil {
@@ -170,6 +196,7 @@ func RESTGetCrawlMaximumNumberOfTweets(accountName string, lang string) []Tweet 
 		fmt.Println("ERR crawl max number of tweets", err)
 		return tweets
 	}
+	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&tweets)
 	if err != nil {
@@ -195,6 +222,7 @@ func RESTPostClassifyTweets(tweets []Tweet, lang string) []Tweet {
 	if err != nil {
 		log.Printf("ERR %v\n", err)
 	}
+	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&classifiedTweets)
 	if err != nil {
@@ -217,11 +245,9 @@ func RESTPostStoreTweets(tweets []Tweet) bool {
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweets %v\n", err)
 	}
-	if res.StatusCode == 200 {
-		return true
-	}
+	defer res.Body.Close()
 
-	return false
+	return res.StatusCode == 200
 }
 
 // RESTPostStoreClassifiedTweets returns ok
@@ -237,9 +263,7 @@ func RESTPostStoreClassifiedTweets(tweets []Tweet) bool {
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweets %v\n", err)
 	}
-	if res.StatusCode == 200 {
-		return true
-	}
+	defer res.Body.Close()
 
-	return false
+	return res.StatusCode == 200
 }
