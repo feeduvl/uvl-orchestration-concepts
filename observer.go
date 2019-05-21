@@ -28,8 +28,6 @@ func InitObservation() {
 }
 
 func AddObservable(observable ObservableTwitter) {
-	// observableManager := make(map[string]ObservableTwitterManager)
-
 	fmt.Printf("[%s] 2.2: add observer\n", observable.AccountName)
 	accountName := observable.AccountName
 	lang := observable.Lang
