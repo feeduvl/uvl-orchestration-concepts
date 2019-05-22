@@ -60,11 +60,21 @@ func AddObservable(observable ObservableTwitter) {
 		}
 
 		fmt.Printf("[%s] 2.5: classify and store tweets \n", accountName)
+		var classifiedTweets []Tweet
 		for _, chunkOfTweets := range chunkTweets(crawledTweets) {
-			classifiedTweets := classifyTweets(chunkOfTweets, lang)
+			classifiedTweets = classifyTweets(chunkOfTweets, lang)
 			storeClassifiedTweets(classifiedTweets)
 		}
 		fmt.Printf("[%s] 2.6: tweets classified and stored\n", accountName)
+
+		if lang == "it" {
+			fmt.Printf("[%s] 2.7: extract topics\n", accountName)
+			for _, tweet := range classifiedTweets {
+				tweet.Topics = extractTweetTopics(tweet)
+				storeTweetsTopics(tweet)
+			}
+			fmt.Printf("[%s] 2.6: topics extracted and stored\n", accountName)
+		}
 	})
 	if err != nil {
 		fmt.Printf("ERR - could not add %s as observer\nGot error: %v\n---\n", accountName, err)
@@ -86,8 +96,8 @@ func RemoveObservable(accountName string) bool {
 }
 
 func processTweets(accountName, lang, fast string) {
-	fmt.Printf("0.0. postProcessTweets called with accountName: %s, lang: %s \n", accountName, lang)
-	fmt.Printf("1.1. crawl tweets for %s %s \n", accountName, fast)
+	fmt.Printf("[%s] 0.0. postProcessTweets called \n", accountName)
+	fmt.Printf("[%s] 1.1. crawl tweets\n", accountName)
 	var crawledTweets []Tweet
 	if fast == "fast" {
 		crawledTweets = crawlObservableTweets(accountName, lang)
@@ -95,14 +105,25 @@ func processTweets(accountName, lang, fast string) {
 		crawledTweets = RESTGetCrawlMaximumNumberOfTweets(accountName, lang)
 	}
 	storeCrawledTweets(crawledTweets)
-	fmt.Printf("1.2. crawled and stored %v tweets: \n\n", len(crawledTweets))
+	fmt.Printf("[%s] 1.2. crawled and stored %v tweets: \n\n", accountName, len(crawledTweets))
 
-	fmt.Printf("2.1. classify and store tweets: \n")
+	fmt.Printf("[%s] 2.1. classify and store tweets: \n", accountName)
+	var classifiedTweets []Tweet
 	for _, chunkOfTweets := range chunkTweets(crawledTweets) {
-		classifiedTweets := classifyTweets(chunkOfTweets, lang)
+		classifiedTweets = classifyTweets(chunkOfTweets, lang)
 		storeClassifiedTweets(classifiedTweets)
 	}
-	fmt.Printf("3.2 tweets classified and stored \n\n")
+	fmt.Printf("[%s] 2.2 tweets classified and stored \n\n", accountName)
+
+	if lang == "it" {
+		fmt.Printf("[%s] 3.0: extract topics\n", accountName)
+		for _, tweet := range classifiedTweets {
+			tweet.Topics = extractTweetTopics(tweet)
+			storeTweetsTopics(tweet)
+		}
+		fmt.Printf("[%s] 3.1: topics extracted and stored\n", accountName)
+	}
+	fmt.Printf("[%s] 4.0: done processing\n", accountName)
 }
 
 func loadObservables() {
@@ -163,12 +184,20 @@ func classifyTweets(tweets []Tweet, lang string) []Tweet {
 	return RESTPostClassifyTweets(tweets, lang)
 }
 
+func extractTweetTopics(tweets Tweet) TweetTopics {
+	return RESTPostExtractTweetTopics(tweets)
+}
+
 func storeCrawledTweets(crawledTweets []Tweet) {
 	RESTPostStoreTweets(crawledTweets)
 }
 
 func storeClassifiedTweets(classifiedTweets []Tweet) {
 	RESTPostStoreClassifiedTweets(classifiedTweets)
+}
+
+func storeTweetsTopics(tweet Tweet) {
+	RESTPostStoreTweetTopics(tweet)
 }
 
 func ObserveUnclassifiedTweets() {

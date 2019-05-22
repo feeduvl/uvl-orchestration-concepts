@@ -19,6 +19,7 @@ var baseURL = os.Getenv("BASE_URL")
 const (
 	// analytics layer
 	endpointPostClassificationTwitter = "/ri-analytics-classification-twitter/lang/"
+	endpointPostExtractTweetTopics    = "/analytics-backend/tweetClassification"
 
 	// collection layer
 	endpointGetCrawlTweets              = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
@@ -32,6 +33,9 @@ const (
 	endpointGetUnclassifiedTweets            = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
 	endpointPostTweet                        = "/ri-storage-twitter/store/tweet/"
 	endpointPostClassifiedTweet              = "/ri-storage-twitter/store/classified/tweet/"
+	endpointPostTweetTopics                  = "/ri-storage-twitter/store/topics"
+
+	jsonPayload = "application/json; charset=utf-8"
 )
 
 var client = getHTTPClient()
@@ -39,12 +43,12 @@ var client = getHTTPClient()
 func getHTTPClient() *http.Client {
 	pwd, _ := os.Getwd()
 	caCert, err := ioutil.ReadFile(pwd + "/ca_chain.crt")
-	timeout := time.Duration(2 * time.Minute)
 	if err != nil {
 		log.Fatal(err)
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
+	timeout := time.Duration(2 * time.Minute)
 
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -67,7 +71,7 @@ func RESTPostStoreObserveTwitterAccount(obserable ObservableTwitter) bool {
 	}
 
 	url := baseURL + endpointPostObserveTwitterAccount
-	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
+	res, err := client.Post(url, jsonPayload, requestBody)
 	if err != nil {
 		log.Printf("ERR post store observable %v\n", err)
 	}
@@ -218,7 +222,7 @@ func RESTPostClassifyTweets(tweets []Tweet, lang string) []Tweet {
 	}
 
 	url := baseURL + endpointPostClassificationTwitter + lang
-	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
+	res, err := client.Post(url, jsonPayload, requestBody)
 	if err != nil {
 		log.Printf("ERR %v\n", err)
 	}
@@ -241,7 +245,7 @@ func RESTPostStoreTweets(tweets []Tweet) bool {
 	}
 
 	url := baseURL + endpointPostTweet
-	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
+	res, err := client.Post(url, jsonPayload, requestBody)
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweets %v\n", err)
 	}
@@ -259,9 +263,52 @@ func RESTPostStoreClassifiedTweets(tweets []Tweet) bool {
 	}
 
 	url := baseURL + endpointPostClassifiedTweet
-	res, err := client.Post(url, "application/json; charset=utf-8", requestBody)
+	res, err := client.Post(url, jsonPayload, requestBody)
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweets %v\n", err)
+	}
+	defer res.Body.Close()
+
+	return res.StatusCode == 200
+}
+
+// RESTPostExtractTweetTopics returns ok
+func RESTPostExtractTweetTopics(tweet Tweet) TweetTopics {
+	var tweetTopics TweetTopics
+
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(TweetTopicExtractionPayload{Message: tweet.Text})
+	if err != nil {
+		log.Printf("ERR - json formatting error: %v\n", err)
+	}
+
+	url := baseURL + endpointPostExtractTweetTopics
+	res, err := client.Post(url, jsonPayload, requestBody)
+	if err != nil {
+		log.Printf("ERR %v\n", err)
+	}
+	defer res.Body.Close()
+
+	err = json.NewDecoder(res.Body).Decode(&tweetTopics)
+	if err != nil {
+		log.Printf("ERR cannot decode tweets with topics %v\n", err)
+	}
+
+	return tweetTopics
+}
+
+// RESTPostStoreTweetTopics returns ok
+func RESTPostStoreTweetTopics(tweet Tweet) bool {
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(tweet)
+	if err != nil {
+		log.Printf("ERR - json formatting error: %v\n", err)
+	}
+
+	url := baseURL + endpointPostTweetTopics
+	res, err := client.Post(url, jsonPayload, requestBody)
+	if err != nil {
+		log.Printf("ERR cannot send request to store tweet topics %v\n", err)
 	}
 	defer res.Body.Close()
 
