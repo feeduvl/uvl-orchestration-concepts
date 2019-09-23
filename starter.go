@@ -22,6 +22,7 @@ func main() {
 	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObservableTwitterAccount).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/twitter/observe/account/{account_name}", postDeleteObservableTwitterAccount).Methods("DELETE")
 	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/unclassified", postProcessUnclassifiedTweets).Methods("POST")
 
 	// restart observation here? In case this MS needs to be restarted
 	fmt.Println("Init the Observation")
@@ -123,4 +124,11 @@ func postProcessTweets(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "tweets successfully processed"})
+}
+
+func postProcessUnclassifiedTweets(w http.ResponseWriter, r *http.Request) {
+	retrieveAndProcessUnclassifiedTweets()
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "unclassified tweets successfully processed"})
 }
