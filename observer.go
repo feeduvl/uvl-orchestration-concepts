@@ -224,6 +224,13 @@ func retrieveAndProcessUnclassifiedTweets() {
 		for _, chunkOfTweets := range chunkTweets(tweets) {
 			classifiedTweets := classifyTweets(chunkOfTweets, observable.Lang)
 			storeClassifiedTweets(classifiedTweets)
+			if observable.Lang == "it" {
+				fmt.Printf("1.2.1: extract topics\n")
+				for _, tweet := range classifiedTweets {
+					tweet.Topics = extractTweetTopics(tweet)
+					storeTweetsTopics(tweet)
+				}
+			}
 		}
 		fmt.Printf("1.3 tweets classified and stored \n\n")
 	}
