@@ -26,8 +26,8 @@ func main() {
 
 	// restart observation here? In case this MS needs to be restarted
 	fmt.Println("Init the Observation")
-	go InitObservation()
-	go ObserveUnclassifiedTweets()
+	InitObservation()
+	ObserveUnclassifiedTweets()
 
 	fmt.Println("MS started")
 	log.Fatal(http.ListenAndServe(":9703", handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(router)))

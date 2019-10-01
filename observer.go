@@ -137,7 +137,7 @@ func loadObservables() {
 func getObserverInterval(interval string) string {
 	switch interval {
 	case "minutely":
-		return "0 * * * * *"
+		return "* * * * *"
 	case "hourly":
 		return "@hourly"
 	case "daily":

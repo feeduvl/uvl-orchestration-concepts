@@ -54,6 +54,7 @@ func getHTTPClient() *http.Client {
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				RootCAs: caCertPool,
+				// InsecureSkipVerify: true,
 			},
 		},
 		Timeout: timeout,
