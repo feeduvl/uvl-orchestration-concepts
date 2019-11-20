@@ -15,6 +15,7 @@ import (
 )
 
 var baseURL = os.Getenv("BASE_URL")
+var bearerToken = "Bearer " + os.Getenv("BEARER_TOKEN")
 
 const (
 	// analytics layer
@@ -58,6 +59,10 @@ func getHTTPClient() *http.Client {
 			},
 		},
 		Timeout: timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			req.Header.Add("Authorization", bearerToken)
+			return nil
+		},
 	}
 
 	return client
@@ -226,6 +231,7 @@ func RESTPostClassifyTweets(tweets []Tweet, lang string) []Tweet {
 	res, err := client.Post(url, jsonPayload, requestBody)
 	if err != nil {
 		log.Printf("ERR %v\n", err)
+		return classifiedTweets
 	}
 	defer res.Body.Close()
 
