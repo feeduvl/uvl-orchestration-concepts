@@ -37,6 +37,13 @@ const (
 	endpointPostTweetTopics                  = "/ri-storage-twitter/store/topics"
 
 	jsonPayload = "application/json; charset=utf-8"
+
+	GET           = "GET"
+	POST          = "POST"
+	DELETE        = "DELETE"
+	AUTHORIZATION = "Authorization"
+	ACCEPT        = "Accept"
+	TYPE_JSON     = "application/json"
 )
 
 var client = getHTTPClient()
@@ -60,7 +67,7 @@ func getHTTPClient() *http.Client {
 		},
 		Timeout: timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			req.Header.Add("Authorization", bearerToken)
+			req.Header.Add(AUTHORIZATION, bearerToken)
 			return nil
 		},
 	}
@@ -77,7 +84,10 @@ func RESTPostStoreObserveTwitterAccount(obserable ObservableTwitter) bool {
 	}
 
 	url := baseURL + endpointPostObserveTwitterAccount
-	res, err := client.Post(url, jsonPayload, requestBody)
+	req, _ := http.NewRequest(POST, url, requestBody)
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR post store observable %v\n", err)
 	}
@@ -91,11 +101,21 @@ func RESTGetObservablesTwitterAccounts() []ObservableTwitter {
 	var obserables []ObservableTwitter
 
 	url := baseURL + endpointGetObservablesTwitterAccounts
-	res, err := client.Get(url)
+
+	req, _ := http.NewRequest(GET, url, bytes.NewBuffer(nil))
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println("ERR cannot send observable account get request", err)
 		return obserables
 	}
+	fmt.Println("------START")
+	fmt.Println(bearerToken)
+	fmt.Println(res.Status)
+	fmt.Println(res.Header)
+	fmt.Println(res.Body)
+	fmt.Println("------END")
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&obserables)
@@ -116,11 +136,9 @@ func RESTDeleteObservablesTwitterAccounts(observable ObservableTwitter) bool {
 	}
 
 	url := baseURL + endpointDeleteObservablesTwitterAccounts
-	req, err := http.NewRequest("DELETE", url, requestBody)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
+	req, _ := http.NewRequest(DELETE, url, requestBody)
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
 	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR cannot send request to delte observable %v\n", err)
@@ -136,7 +154,10 @@ func RESTGetTwitterAccountNameExists(accountName string) CrawlerResponseMessage 
 
 	endpoint := fmt.Sprintf(endpointGetTwitterAccountNameExists, accountName)
 	url := baseURL + endpoint
-	res, err := client.Get(url)
+	req, _ := http.NewRequest(GET, url, bytes.NewBuffer(nil))
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println("ERR cannot send get request to check if Twitter account exists", err)
 		return response
@@ -158,7 +179,10 @@ func RESTGetUnclassifiedTweets(accountName, lang string) []Tweet {
 
 	endpoint := fmt.Sprintf(endpointGetUnclassifiedTweets, accountName, lang)
 	url := baseURL + endpoint
-	res, err := client.Get(url)
+	req, _ := http.NewRequest(GET, url, bytes.NewBuffer(nil))
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println("ERR cannot send get request to get unclassified tweets", err)
 		return tweet
@@ -180,7 +204,10 @@ func RESTGetCrawlTweets(accountName string, lang string) []Tweet {
 
 	endpoint := fmt.Sprintf(endpointGetCrawlTweets, accountName, lang)
 	url := baseURL + endpoint
-	res, err := client.Get(url)
+	req, _ := http.NewRequest(GET, url, bytes.NewBuffer(nil))
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println("ERR cannot send request to tweet crawler", err)
 		return tweets
@@ -201,7 +228,10 @@ func RESTGetCrawlMaximumNumberOfTweets(accountName string, lang string) []Tweet 
 
 	endpoint := fmt.Sprintf(endpointGetCrawlAllAvailableTweets, accountName, lang)
 	url := baseURL + endpoint
-	res, err := client.Get(url)
+	req, _ := http.NewRequest(GET, url, bytes.NewBuffer(nil))
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println("ERR crawl max number of tweets", err)
 		return tweets
@@ -228,7 +258,10 @@ func RESTPostClassifyTweets(tweets []Tweet, lang string) []Tweet {
 	}
 
 	url := baseURL + endpointPostClassificationTwitter + lang
-	res, err := client.Post(url, jsonPayload, requestBody)
+	req, _ := http.NewRequest(POST, url, requestBody)
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR %v\n", err)
 		return classifiedTweets
@@ -252,7 +285,10 @@ func RESTPostStoreTweets(tweets []Tweet) bool {
 	}
 
 	url := baseURL + endpointPostTweet
-	res, err := client.Post(url, jsonPayload, requestBody)
+	req, _ := http.NewRequest(POST, url, requestBody)
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweets %v\n", err)
 	}
@@ -270,7 +306,10 @@ func RESTPostStoreClassifiedTweets(tweets []Tweet) bool {
 	}
 
 	url := baseURL + endpointPostClassifiedTweet
-	res, err := client.Post(url, jsonPayload, requestBody)
+	req, _ := http.NewRequest(POST, url, requestBody)
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweets %v\n", err)
 	}
@@ -290,7 +329,10 @@ func RESTPostExtractTweetTopics(tweet Tweet) TweetTopics {
 	}
 
 	url := baseURL + endpointPostExtractTweetTopics
-	res, err := client.Post(url, jsonPayload, requestBody)
+	req, _ := http.NewRequest(POST, url, requestBody)
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR %v\n", err)
 	}
@@ -313,7 +355,10 @@ func RESTPostStoreTweetTopics(tweet Tweet) bool {
 	}
 
 	url := baseURL + endpointPostTweetTopics
-	res, err := client.Post(url, jsonPayload, requestBody)
+	req, _ := http.NewRequest(POST, url, requestBody)
+	req.Header.Set(AUTHORIZATION, bearerToken)
+	req.Header.Add(ACCEPT, TYPE_JSON)
+	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR cannot send request to store tweet topics %v\n", err)
 	}
