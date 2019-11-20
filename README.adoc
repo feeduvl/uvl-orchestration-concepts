@@ -23,13 +23,15 @@ These microservices must be configured and running in order to use ri-orchestrat
 
 - Define a shared base url of all the three previously mentioned microservices called  *BASE_URL*. BASE_URL will be used as an environment variable in the Docker run command (See following section).
 
-- Additionally, an SSL certificate must be mounted to the docker image during the run build (see the following example)
+- An SSL certificate must be mounted to the docker image during the run build (see the following example)
+
+- A bearer token must be added as an environment variable called *BEARER_TOKEN*
 
 Run the following commands to start the microservice:
 
 . docker build -t ri-orchestration-twitter .
 
-. docker run -v "<path_to>/ca_chain.crt:/go/src/app/ca_chain.crt" -e "BASE_URL=<BASE_URL_OF_THE_REQUIRED_MICROSERVICES>" -p 9703:9703 ri-orchestration-twitter
+. docker run -v "<path_to>/ca_chain.crt:/go/src/app/ca_chain.crt" -e "BASE_URL=<BASE_URL_OF_THE_REQUIRED_MICROSERVICES>" -e "BEARER_TOKEN=<token>" -p 9703:9703 ri-orchestration-twitter
 
 
 === How to use it (high-level description)
