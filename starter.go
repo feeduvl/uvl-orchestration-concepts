@@ -18,11 +18,13 @@ func main() {
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"})
 
+	initialize()
+
 	router := makeRouter()
 	log.Fatal(http.ListenAndServe(":9703", handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(router)))
 }
 
-func init() {
+func initialize() {
 	// restart observation here? In case this MS needs to be restarted
 	fmt.Println("Init the Observation")
 	InitObservation()
@@ -116,12 +118,6 @@ func postProcessTweets(w http.ResponseWriter, r *http.Request) {
 	if !crawlerResponseMessage.AccountExists {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(crawlerResponseMessage)
-		return
-	}
-
-	if accountName == "" || lang == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ResponseMessage{Status: false, Message: "account name or language are empty"})
 		return
 	}
 

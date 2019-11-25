@@ -46,6 +46,7 @@ func setup() {
 	fmt.Println("--- --- setup")
 	router = makeRouter()
 	setupMockClient()
+	initialize()
 	observer.Stop() // don't execute scheduled updates
 }
 
@@ -119,9 +120,9 @@ func mockStorageTwitter(r *mux.Router) {
 
 	// endpointGetObservablesTwitterAccounts    = "/ri-storage-twitter/observables"
 	// endpointDeleteObservablesTwitterAccounts = "/ri-storage-twitter/observables"
-	r.HandleFunc("/ri-storage-twitter/store/observable/", func(w http.ResponseWriter, request *http.Request) {
+	r.HandleFunc("/ri-storage-twitter/observables", func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == "GET" {
-			respond(w, http.StatusOK, `[{"account_name": "VodafoneUK", "interval": "midnight", "lang": "en"}]`)
+			respond(w, http.StatusOK, `[{"account_name": "WindItalia", "interval": "midnight", "lang": "it"}]`)
 		} else if request.Method == "DELETE" {
 			respond(w, http.StatusOK, nil)
 		} else {
@@ -233,13 +234,11 @@ func isSuccess(code int) bool {
 
 func assertSuccess(t *testing.T, rr *httptest.ResponseRecorder) {
 	if !isSuccess(rr.Code) {
-		fmt.Println(string(rr.Body.Bytes()))
 		t.Errorf("Status code differs. Expected success.\n Got status %d (%s) instead", rr.Code, http.StatusText(rr.Code))
 	}
 }
 func assertFailure(t *testing.T, rr *httptest.ResponseRecorder) {
 	if isSuccess(rr.Code) {
-		fmt.Println(string(rr.Body.Bytes()))
 		t.Errorf("Status code differs. Expected failure.\n Got status %d (%s) instead", rr.Code, http.StatusText(rr.Code))
 	}
 }
@@ -249,17 +248,22 @@ func assertFailure(t *testing.T, rr *httptest.ResponseRecorder) {
  */
 
 func TestPostObservableTwitterAccount(t *testing.T) {
+	println("Running test TestPostObservableTwitterAccount")
 	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/observe/tweet/account/%s/interval/%s/lang/%s"}
 	assertFailure(t, ep.withVars("should", "fail", "en").mustExecuteRequest(nil))
-	assertSuccess(t, ep.withVars("WindItalia", "2h", "it").mustExecuteRequest(nil))
+	assertSuccess(t, ep.withVars("VodafoneUK", "2h", "en").mustExecuteRequest(nil))
+	assertSuccess(t, ep.withVars("VodafoneUK", "2h", "en").mustExecuteRequest(nil))                 // noop re-adding existing observable
+	assertSuccess(t, ep.withVars("VodafoneUK", "30 3-6,20-23 * * *", "en").mustExecuteRequest(nil)) // update existing observable
 }
 
 func TestPostDeleteObservableTwitterAccount(t *testing.T) {
+	println("Running test TestPostDeleteObservableTwitterAccount")
 	ep := endpoint{method: "DELETE", url: "/hitec/orchestration/twitter/observe/account/%s"}
 	assertSuccess(t, ep.withVars("VodafoneUK").mustExecuteRequest(nil))
 }
 
 func TestPostProcessTweets(t *testing.T) {
+	println("Running test TestPostProcessTweets")
 	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/process/tweet/account/%s/lang/%s/%s"}
 	assertFailure(t, ep.withVars("shouldfail", "en", "slow").mustExecuteRequest(nil))
 	assertFailure(t, ep.withVars("shouldfail", "en", "fast").mustExecuteRequest(nil))
@@ -268,6 +272,7 @@ func TestPostProcessTweets(t *testing.T) {
 }
 
 func TestPostProcessUnclassifiedTweets(t *testing.T) {
+	println("Running test TestPostProcessUnclassifiedTweets")
 	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/process/tweet/unclassified"}
 	assertSuccess(t, ep.mustExecuteRequest(nil))
 }
