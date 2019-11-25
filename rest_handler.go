@@ -44,6 +44,8 @@ const (
 	AUTHORIZATION = "Authorization"
 	ACCEPT        = "Accept"
 	TYPE_JSON     = "application/json"
+
+	errJsonMessageTemplate = "ERR - json formatting error: %v\n"
 )
 
 var client = getHTTPClient()
@@ -80,7 +82,7 @@ func RESTPostStoreObserveTwitterAccount(obserable ObservableTwitter) bool {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(obserable)
 	if err != nil {
-		log.Printf("ERR - json formatting error: %v\n", err)
+		log.Printf(errJsonMessageTemplate, err)
 	}
 
 	url := baseURL + endpointPostObserveTwitterAccount
@@ -110,12 +112,6 @@ func RESTGetObservablesTwitterAccounts() []ObservableTwitter {
 		fmt.Println("ERR cannot send observable account get request", err)
 		return obserables
 	}
-	fmt.Println("------START")
-	fmt.Println(bearerToken)
-	fmt.Println(res.Status)
-	fmt.Println(res.Header)
-	fmt.Println(res.Body)
-	fmt.Println("------END")
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&obserables)
@@ -132,7 +128,7 @@ func RESTDeleteObservablesTwitterAccounts(observable ObservableTwitter) bool {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(observable)
 	if err != nil {
-		log.Printf("ERR - json formatting error: %v\n", err)
+		log.Printf(errJsonMessageTemplate, err)
 	}
 
 	url := baseURL + endpointDeleteObservablesTwitterAccounts
@@ -254,7 +250,7 @@ func RESTPostClassifyTweets(tweets []Tweet, lang string) []Tweet {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(tweets)
 	if err != nil {
-		log.Printf("ERR - json formatting error: %v\n", err)
+		log.Printf(errJsonMessageTemplate, err)
 	}
 
 	url := baseURL + endpointPostClassificationTwitter + lang
@@ -281,7 +277,7 @@ func RESTPostStoreTweets(tweets []Tweet) bool {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(tweets)
 	if err != nil {
-		log.Printf("ERR - json formatting error: %v\n", err)
+		log.Printf(errJsonMessageTemplate, err)
 	}
 
 	url := baseURL + endpointPostTweet
@@ -302,7 +298,7 @@ func RESTPostStoreClassifiedTweets(tweets []Tweet) bool {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(tweets)
 	if err != nil {
-		log.Printf("ERR - json formatting error: %v\n", err)
+		log.Printf(errJsonMessageTemplate, err)
 	}
 
 	url := baseURL + endpointPostClassifiedTweet
@@ -325,7 +321,7 @@ func RESTPostExtractTweetTopics(tweet Tweet) TweetTopics {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(TweetTopicExtractionPayload{Message: tweet.Text})
 	if err != nil {
-		log.Printf("ERR - json formatting error: %v\n", err)
+		log.Printf(errJsonMessageTemplate, err)
 	}
 
 	url := baseURL + endpointPostExtractTweetTopics
@@ -351,7 +347,7 @@ func RESTPostStoreTweetTopics(tweet Tweet) bool {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(tweet)
 	if err != nil {
-		log.Printf("ERR - json formatting error: %v\n", err)
+		log.Printf(errJsonMessageTemplate, err)
 	}
 
 	url := baseURL + endpointPostTweetTopics
