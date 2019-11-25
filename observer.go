@@ -50,36 +50,38 @@ func AddObservable(observable ObservableTwitter) {
 	}
 
 	fmt.Printf("[%s] 2.2.3: add cron job\n", accountName)
-	_, err := observableManager[accountName].CronJob.AddFunc(getObserverInterval(interval), func() {
-		fmt.Printf("[%s] 2.3: crawl tweets\n", accountName)
-		crawledTweets := crawlObservableTweets(accountName, lang)
-		storeCrawledTweets(crawledTweets)
-		fmt.Printf("[%s] 2.4: crawled and stored tweets: %v\n", accountName, len(crawledTweets))
-		if len(crawledTweets) == 0 {
-			return
-		}
-
-		fmt.Printf("[%s] 2.5: classify and store tweets \n", accountName)
-		var classifiedTweets []Tweet
-		for _, chunkOfTweets := range chunkTweets(crawledTweets) {
-			classifiedTweets = classifyTweets(chunkOfTweets, lang)
-			storeClassifiedTweets(classifiedTweets)
-		}
-		fmt.Printf("[%s] 2.6: tweets classified and stored\n", accountName)
-
-		if lang == "it" {
-			fmt.Printf("[%s] 2.7: extract topics\n", accountName)
-			for _, tweet := range classifiedTweets {
-				tweet.Topics = extractTweetTopics(tweet)
-				storeTweetsTopics(tweet)
-			}
-			fmt.Printf("[%s] 2.6: topics extracted and stored\n", accountName)
-		}
+	err := observableManager[accountName].CronJob.AddFunc(getObserverInterval(interval), func() {
+		updateAccount(accountName, lang)
 	})
 	if err != nil {
 		fmt.Printf("ERR - could not add %s as observer\nGot error: %v\n---\n", accountName, err)
 	}
 	observableManager[accountName].CronJob.Start()
+}
+
+func updateAccount(accountName string, lang string) {
+	fmt.Printf("[%s] 2.3: crawl tweets\n", accountName)
+	crawledTweets := crawlObservableTweets(accountName, lang)
+	storeCrawledTweets(crawledTweets)
+	fmt.Printf("[%s] 2.4: crawled and stored tweets: %v\n", accountName, len(crawledTweets))
+	if len(crawledTweets) == 0 {
+		return
+	}
+	fmt.Printf("[%s] 2.5: classify and store tweets \n", accountName)
+	var classifiedTweets []Tweet
+	for _, chunkOfTweets := range chunkTweets(crawledTweets) {
+		classifiedTweets = classifyTweets(chunkOfTweets, lang)
+		storeClassifiedTweets(classifiedTweets)
+	}
+	fmt.Printf("[%s] 2.6: tweets classified and stored\n", accountName)
+	if lang == "it" {
+		fmt.Printf("[%s] 2.7: extract topics\n", accountName)
+		for _, tweet := range classifiedTweets {
+			tweet.Topics = extractTweetTopics(tweet)
+			storeTweetsTopics(tweet)
+		}
+		fmt.Printf("[%s] 2.6: topics extracted and stored\n", accountName)
+	}
 }
 
 func RemoveObservable(accountName string) bool {
@@ -135,24 +137,20 @@ func loadObservables() {
 }
 
 func getObserverInterval(interval string) string {
-	switch interval {
-	case "minutely":
-		return "* * * * *"
-	case "hourly":
-		return "@hourly"
-	case "daily":
-		return "@daily"
-	case "midnight":
-		return "@midnight"
-	case "weekly":
-		return "@weekly"
-	case "monthly":
-		return "@monthly"
-	case "6h":
-		return "@every 6h0m0s"
-	case "2h":
-		return "@every 2h0m0s"
-	default:
+	specialIntervals := map[string]string{
+		"minutely": "* * * * *",
+		"hourly":   "@hourly",
+		"daily":    "@daily",
+		"midnight": "@midnight",
+		"weekly":   "@weekly",
+		"monthly":  "@monthly",
+		"6h":       "@every 6h0m0s",
+		"2h":       "@every 2h0m0s",
+	}
+
+	if specialInterval, ok := specialIntervals[interval]; ok {
+		return specialInterval
+	} else {
 		return interval // allows custom intervals to the cron job specification (https://godoc.org/github.com/robfig/cron) might thorw an error if the custom interval is wrong
 	}
 }
@@ -175,6 +173,10 @@ func chunkTweets(tweets []Tweet) [][]Tweet {
 			chunks = append(chunks, c)
 			chunk = chunk[:0]
 		}
+	}
+
+	if len(chunk) > 0 {
+		chunks = append(chunks, chunk)
 	}
 
 	return chunks
@@ -202,7 +204,7 @@ func storeTweetsTopics(tweet Tweet) {
 
 func ObserveUnclassifiedTweets() {
 	observerUnclassifiedTweets = cron.New()
-	_, err := observerUnclassifiedTweets.AddFunc(getObserverInterval("midnight"), func() {
+	err := observerUnclassifiedTweets.AddFunc(getObserverInterval("midnight"), func() {
 		retrieveAndProcessUnclassifiedTweets()
 	})
 	if err != nil {
