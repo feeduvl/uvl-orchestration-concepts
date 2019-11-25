@@ -9,12 +9,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/robfig/cron"
-
 	"github.com/gorilla/mux"
 )
 
 var router *mux.Router
+var stopTestServer func()
 
 func TestMain(m *testing.M) {
 	fmt.Println("--- Start Tests")
@@ -32,16 +31,109 @@ func TestMain(m *testing.M) {
 func setup() {
 	fmt.Println("--- --- setup")
 	setupRouter()
+	setupMockClient()
+	observer.Stop() // don't execute scheduled updates
 }
 
 func setupRouter() {
 	router = mux.NewRouter()
-	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", MockPostObserveTweets).Methods("POST")
-	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", MockPostProcessTweets).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObservableTwitterAccount).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
+}
+
+func setupMockClient() {
+	fmt.Println("Mocking client")
+	handler := makeMockHandler()
+	s := httptest.NewServer(handler)
+	stopTestServer = s.Close
+	baseURL = s.URL
+}
+
+func makeMockHandler() http.Handler {
+	r := mux.NewRouter()
+	mockAnalyticsClassificationTwitter(r)
+	mockAnalyticsBackend(r)
+	mockCollectionExplicitFeedbackTwitter(r)
+	mockStorageTwitter(r)
+	return r
+}
+
+func mockAnalyticsClassificationTwitter(r *mux.Router) {
+	// endpointPostClassificationTwitter = "/ri-analytics-classification-twitter/lang/"
+}
+
+func mockAnalyticsBackend(r *mux.Router) {
+	// endpointPostExtractTweetTopics    = "/analytics-backend/tweetClassification"
+}
+
+func mockCollectionExplicitFeedbackTwitter(r *mux.Router) {
+	// endpointGetCrawlTweets              = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
+	// endpointGetCrawlAllAvailableTweets  = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s"
+
+	// endpointGetTwitterAccountNameExists = "/ri-collection-explicit-feedback-twitter/%s/exists"
+	r.HandleFunc("/ri-collection-explicit-feedback-twitter/{account}/exists", func(w http.ResponseWriter, request *http.Request) {
+		vars := mux.Vars(request)
+		account := vars["account"]
+		fmt.Printf("Check account %s exists\n", account)
+
+		if account == "WindItalia" {
+			respond(w, http.StatusOK, map[string]interface{}{
+				"account_exists": true,
+				"message":        fmt.Sprintf("Account %s exists on Twitter", account),
+			})
+		} else {
+			respond(w, http.StatusOK, map[string]interface{}{
+				"account_exists": false,
+				"message":        fmt.Sprintf("Account %s does not exist", account),
+			})
+		}
+	})
+}
+
+func mockStorageTwitter(r *mux.Router) {
+	// endpointPostObserveTwitterAccount        = "/ri-storage-twitter/store/observable/"
+	r.HandleFunc("/ri-storage-twitter/store/observable/", func(w http.ResponseWriter, request *http.Request) {
+		fmt.Printf("Post observable\n")
+		respond(w, http.StatusOK, nil)
+	})
+
+	// endpointGetObservablesTwitterAccounts    = "/ri-storage-twitter/observables"
+	// endpointDeleteObservablesTwitterAccounts = "/ri-storage-twitter/observables"
+	// endpointGetUnclassifiedTweets            = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
+	// endpointPostTweet                        = "/ri-storage-twitter/store/tweet/"
+	// endpointPostClassifiedTweet              = "/ri-storage-twitter/store/classified/tweet/"
+	// endpointPostTweetTopics                  = "/ri-storage-twitter/store/topics"
+}
+
+func respond(writer http.ResponseWriter, statusCode int, response interface{}) {
+	var body []byte
+	var err error
+	if response == nil {
+		body = make([]byte, 0)
+	} else {
+		switch response.(type) {
+		case string:
+			body = []byte(response.(string))
+		case []byte:
+			body = response.([]byte)
+		default:
+			body, err = json.Marshal(response)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	writer.WriteHeader(statusCode)
+
+	if _, err = writer.Write(body); err != nil {
+		panic(err)
+	}
 }
 
 func tearDown() {
 	fmt.Println("--- --- tear down")
+	stopTestServer()
 }
 
 func buildRequest(method, endpoint string, payload io.Reader, t *testing.T) *http.Request {
@@ -60,6 +152,10 @@ func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	return rr
 }
 
+/*
+ * Test methods
+ */
+
 func TestPostObserveTweets(t *testing.T) {
 	fmt.Println("start TestPostObserveTweets")
 	var method = "POST"
@@ -73,8 +169,8 @@ func TestPostObserveTweets(t *testing.T) {
 	rr := executeRequest(req)
 
 	//Confirm the response has the right status code
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusInternalServerError, status)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusBadRequest, status)
 	}
 
 	/*
@@ -88,107 +184,4 @@ func TestPostObserveTweets(t *testing.T) {
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
 	}
-}
-
-func MockPostObserveTweets(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	accountName := params["account_name"]
-	interval := params["interval"] // possible intervals: minutely, hourly, daily, monthly
-	lang := params["lang"]
-
-	fmt.Printf("1.0 postObserveTweets called with accountName: %s, interval: %s, lang: %s \n", accountName, interval, lang)
-
-	// 1. store app to observe
-
-	var ok bool
-	allowedLanguages := map[string]bool{
-		"en": true,
-		"it": true,
-	}
-	allowedSpcialIntervals := map[string]bool{
-		"minutely": true,
-		"hourly":   true,
-		"daily":    true,
-		"weekly":   true,
-		"monthly":  true,
-		"6h":       true,
-		"2h":       true,
-	}
-	_, err := cron.Parse(interval)
-	if accountName == "" || !allowedLanguages[lang] || (err != nil && !allowedSpcialIntervals[interval]) {
-		ok = false
-	} else {
-		ok = true
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ResponseMessage{Status: false, Message: "storage layer unreachable"})
-		return
-	}
-
-	fmt.Printf("1.1 restart observation \n")
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "observation successfully initiated"})
-}
-
-func TestPostProcessTweets(t *testing.T) {
-	fmt.Println("start TestPostProcessTweets")
-	var method = "POST"
-	var endpoint = "/hitec/orchestration/twitter/process/tweet/account/%s/lang/%s/%s"
-
-	/*
-	 * test for faillure
-	 */
-	endpointFail := fmt.Sprintf(endpoint, "", "fail", "error")
-	req := buildRequest(method, endpointFail, nil, t)
-	rr := executeRequest(req)
-
-	//Confirm the response has the right status code
-	if status := rr.Code; status != http.StatusMovedPermanently {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusMovedPermanently, status)
-	}
-
-	/*
-	 * test for success
-	 */
-	endpointSuccess := fmt.Sprintf(endpoint, "WindItalia", "it", "fast")
-	req = buildRequest(method, endpointSuccess, nil, t)
-	rr = executeRequest(req)
-
-	//Confirm the response has the right status code
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
-}
-
-func MockPostProcessTweets(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	accountName := params["account_name"]
-	lang := params["lang"]
-	fast := params["fast"]
-
-	var ok bool
-	allowedLanguages := map[string]bool{
-		"en": true,
-		"it": true,
-	}
-	if accountName == "" || !allowedLanguages[lang] || fast == "" {
-		ok = false
-	} else {
-		ok = true
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ResponseMessage{Status: false, Message: "account name or language are empty"})
-		return
-	}
-
-	fmt.Printf("1.1 restart observation \n")
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "tweets successfully processed"})
 }
