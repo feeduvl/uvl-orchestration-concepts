@@ -24,13 +24,15 @@ func main() {
 	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/unclassified", postProcessUnclassifiedTweets).Methods("POST")
 
+	fmt.Println("MS started")
+	log.Fatal(http.ListenAndServe(":9703", handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(router)))
+}
+
+func init() {
 	// restart observation here? In case this MS needs to be restarted
 	fmt.Println("Init the Observation")
 	InitObservation()
 	ObserveUnclassifiedTweets()
-
-	fmt.Println("MS started")
-	log.Fatal(http.ListenAndServe(":9703", handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(router)))
 }
 
 /*
@@ -53,7 +55,7 @@ func postObservableTwitterAccount(w http.ResponseWriter, r *http.Request) {
 	// 1. check if twitter account exists
 	crawlerResponseMessage := RESTGetTwitterAccountNameExists(accountName)
 	if !crawlerResponseMessage.AccountExists {
-		fmt.Printf("1.1 observable %s already exists. The system will not be updated.\n", accountName)
+		fmt.Printf("1.1 account %s does not exist. The system will not be updated.\n", accountName)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(crawlerResponseMessage)
 		return
