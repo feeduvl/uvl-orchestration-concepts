@@ -18,13 +18,7 @@ func main() {
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"})
 
-	router := mux.NewRouter()
-	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObservableTwitterAccount).Methods("POST")
-	router.HandleFunc("/hitec/orchestration/twitter/observe/account/{account_name}", postDeleteObservableTwitterAccount).Methods("DELETE")
-	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
-	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/unclassified", postProcessUnclassifiedTweets).Methods("POST")
-
-	fmt.Println("MS started")
+	router := makeRouter()
 	log.Fatal(http.ListenAndServe(":9703", handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(router)))
 }
 
@@ -33,6 +27,15 @@ func init() {
 	fmt.Println("Init the Observation")
 	InitObservation()
 	ObserveUnclassifiedTweets()
+}
+
+func makeRouter() *mux.Router {
+	router := mux.NewRouter()
+	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObservableTwitterAccount).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/twitter/observe/account/{account_name}", postDeleteObservableTwitterAccount).Methods("DELETE")
+	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/unclassified", postProcessUnclassifiedTweets).Methods("POST")
+	return router
 }
 
 /*

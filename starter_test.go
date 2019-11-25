@@ -30,15 +30,9 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	fmt.Println("--- --- setup")
-	setupRouter()
+	router = makeRouter()
 	setupMockClient()
 	observer.Stop() // don't execute scheduled updates
-}
-
-func setupRouter() {
-	router = mux.NewRouter()
-	router.HandleFunc("/hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}", postObservableTwitterAccount).Methods("POST")
-	router.HandleFunc("/hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}/{fast}", postProcessTweets).Methods("POST")
 }
 
 func setupMockClient() {
