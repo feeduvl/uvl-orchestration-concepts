@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +15,19 @@ import (
 
 var router *mux.Router
 var stopTestServer func()
+
+var mockTweet = map[string]interface{}{
+	"status_id":               "933476766408200200",
+	"in_reply_to_screen_name": "musteraccount",
+	"tweet_class":             "problem_report",
+	"user_name":               "maxmustermann",
+	"created_at":              20181201,
+	"favorite_count":          1,
+	"text":                    "@maxmustermann Thanks for your message!",
+	"lang":                    "en",
+	"retweet_count":           1,
+}
+var mockTweetList = []interface{}{mockTweet}
 
 func TestMain(m *testing.M) {
 	fmt.Println("--- Start Tests")
@@ -60,15 +72,24 @@ func makeMockHandler() http.Handler {
 
 func mockAnalyticsClassificationTwitter(r *mux.Router) {
 	// endpointPostClassificationTwitter = "/ri-analytics-classification-twitter/lang/"
+	r.HandleFunc("/ri-analytics-classification-twitter/lang/{lang}", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, mockTweetList)
+	})
 }
 
 func mockAnalyticsBackend(r *mux.Router) {
 	// endpointPostExtractTweetTopics    = "/analytics-backend/tweetClassification"
+	r.HandleFunc("/analytics-backend/tweetClassification", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, `{"first_class": {"label": "label1", "score": 0.7}, "second_class":  {"label":  "label2", "score": 0.5}}`)
+	})
 }
 
 func mockCollectionExplicitFeedbackTwitter(r *mux.Router) {
 	// endpointGetCrawlTweets              = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
 	// endpointGetCrawlAllAvailableTweets  = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s"
+	r.HandleFunc("/ri-collection-explicit-feedback-twitter/mention/{account}/lang/{lang}/{fast}", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, mockTweetList)
+	})
 
 	// endpointGetTwitterAccountNameExists = "/ri-collection-explicit-feedback-twitter/%s/exists"
 	r.HandleFunc("/ri-collection-explicit-feedback-twitter/{account}/exists", func(w http.ResponseWriter, request *http.Request) {
@@ -76,7 +97,7 @@ func mockCollectionExplicitFeedbackTwitter(r *mux.Router) {
 		account := vars["account"]
 		fmt.Printf("Check account %s exists\n", account)
 
-		if account == "WindItalia" {
+		if account == "WindItalia" || account == "VodafoneUK" {
 			respond(w, http.StatusOK, map[string]interface{}{
 				"account_exists": true,
 				"message":        fmt.Sprintf("Account %s exists on Twitter", account),
@@ -93,31 +114,64 @@ func mockCollectionExplicitFeedbackTwitter(r *mux.Router) {
 func mockStorageTwitter(r *mux.Router) {
 	// endpointPostObserveTwitterAccount        = "/ri-storage-twitter/store/observable/"
 	r.HandleFunc("/ri-storage-twitter/store/observable/", func(w http.ResponseWriter, request *http.Request) {
-		fmt.Printf("Post observable\n")
 		respond(w, http.StatusOK, nil)
 	})
 
 	// endpointGetObservablesTwitterAccounts    = "/ri-storage-twitter/observables"
 	// endpointDeleteObservablesTwitterAccounts = "/ri-storage-twitter/observables"
+	r.HandleFunc("/ri-storage-twitter/store/observable/", func(w http.ResponseWriter, request *http.Request) {
+		if request.Method == "GET" {
+			respond(w, http.StatusOK, `[{"account_name": "VodafoneUK", "interval": "midnight", "lang": "en"}]`)
+		} else if request.Method == "DELETE" {
+			respond(w, http.StatusOK, nil)
+		} else {
+			respond(w, http.StatusMethodNotAllowed, nil)
+		}
+	})
+
 	// endpointGetUnclassifiedTweets            = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
+	r.HandleFunc("/ri-storage-twitter/account_name/{account}/lang/{lang}/unclassified", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, mockTweetList)
+	})
+
 	// endpointPostTweet                        = "/ri-storage-twitter/store/tweet/"
+	r.HandleFunc("/ri-storage-twitter/store/tweet/", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, nil)
+	})
+
 	// endpointPostClassifiedTweet              = "/ri-storage-twitter/store/classified/tweet/"
+	r.HandleFunc("/ri-storage-twitter/store/classified/tweet/", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, nil)
+	})
+
 	// endpointPostTweetTopics                  = "/ri-storage-twitter/store/topics"
+	r.HandleFunc("/ri-storage-twitter/store/topics", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, nil)
+	})
 }
 
-func respond(writer http.ResponseWriter, statusCode int, response interface{}) {
-	var body []byte
+func requestBody(request *http.Request) map[string]string {
+	var body map[string]string
+	err := json.NewDecoder(request.Body).Decode(&body)
+	if err != nil {
+		panic(err)
+	}
+	return body
+}
+
+func respond(writer http.ResponseWriter, statusCode int, body interface{}) {
+	var bodyData []byte
 	var err error
-	if response == nil {
-		body = make([]byte, 0)
+	if body == nil {
+		bodyData = make([]byte, 0)
 	} else {
-		switch response.(type) {
+		switch body.(type) {
 		case string:
-			body = []byte(response.(string))
+			bodyData = []byte(body.(string))
 		case []byte:
-			body = response.([]byte)
+			bodyData = body.([]byte)
 		default:
-			body, err = json.Marshal(response)
+			bodyData, err = json.Marshal(body)
 			if err != nil {
 				panic(err)
 			}
@@ -126,7 +180,7 @@ func respond(writer http.ResponseWriter, statusCode int, response interface{}) {
 
 	writer.WriteHeader(statusCode)
 
-	if _, err = writer.Write(body); err != nil {
+	if _, err = writer.Write(bodyData); err != nil {
 		panic(err)
 	}
 }
@@ -179,36 +233,15 @@ func isSuccess(code int) bool {
 
 func assertSuccess(t *testing.T, rr *httptest.ResponseRecorder) {
 	if !isSuccess(rr.Code) {
+		fmt.Println(string(rr.Body.Bytes()))
 		t.Errorf("Status code differs. Expected success.\n Got status %d (%s) instead", rr.Code, http.StatusText(rr.Code))
 	}
 }
 func assertFailure(t *testing.T, rr *httptest.ResponseRecorder) {
 	if isSuccess(rr.Code) {
+		fmt.Println(string(rr.Body.Bytes()))
 		t.Errorf("Status code differs. Expected failure.\n Got status %d (%s) instead", rr.Code, http.StatusText(rr.Code))
 	}
-}
-
-func assertJsonDecodes(t *testing.T, rr *httptest.ResponseRecorder, v interface{}) {
-	err := json.Unmarshal(rr.Body.Bytes(), v)
-	if err != nil {
-		t.Error(errors.Wrap(err, "Expected valid json array"))
-	}
-}
-
-func buildRequest(method, endpoint string, payload io.Reader, t *testing.T) *http.Request {
-	req, err := http.NewRequest(method, endpoint, payload)
-	if err != nil {
-		t.Errorf("An error occurred. %v", err)
-	}
-
-	return req
-}
-
-func executeRequest(req *http.Request) *httptest.ResponseRecorder {
-	rr := httptest.NewRecorder()
-	router.ServeHTTP(rr, req)
-
-	return rr
 }
 
 /*
@@ -219,4 +252,22 @@ func TestPostObservableTwitterAccount(t *testing.T) {
 	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/observe/tweet/account/%s/interval/%s/lang/%s"}
 	assertFailure(t, ep.withVars("should", "fail", "en").mustExecuteRequest(nil))
 	assertSuccess(t, ep.withVars("WindItalia", "2h", "it").mustExecuteRequest(nil))
+}
+
+func TestPostDeleteObservableTwitterAccount(t *testing.T) {
+	ep := endpoint{method: "DELETE", url: "/hitec/orchestration/twitter/observe/account/%s"}
+	assertSuccess(t, ep.withVars("VodafoneUK").mustExecuteRequest(nil))
+}
+
+func TestPostProcessTweets(t *testing.T) {
+	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/process/tweet/account/%s/lang/%s/%s"}
+	assertFailure(t, ep.withVars("shouldfail", "en", "slow").mustExecuteRequest(nil))
+	assertFailure(t, ep.withVars("shouldfail", "en", "fast").mustExecuteRequest(nil))
+	assertSuccess(t, ep.withVars("WindItalia", "it", "slow").mustExecuteRequest(nil))
+	assertSuccess(t, ep.withVars("WindItalia", "it", "fast").mustExecuteRequest(nil))
+}
+
+func TestPostProcessUnclassifiedTweets(t *testing.T) {
+	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/process/tweet/unclassified"}
+	assertSuccess(t, ep.mustExecuteRequest(nil))
 }
