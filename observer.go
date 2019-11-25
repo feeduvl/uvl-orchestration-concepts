@@ -50,7 +50,7 @@ func AddObservable(observable ObservableTwitter) {
 	}
 
 	fmt.Printf("[%s] 2.2.3: add cron job\n", accountName)
-	_, err := observableManager[accountName].CronJob.AddFunc(getObserverInterval(interval), func() {
+	err := observableManager[accountName].CronJob.AddFunc(getObserverInterval(interval), func() {
 		fmt.Printf("[%s] 2.3: crawl tweets\n", accountName)
 		crawledTweets := crawlObservableTweets(accountName, lang)
 		storeCrawledTweets(crawledTweets)
@@ -202,7 +202,7 @@ func storeTweetsTopics(tweet Tweet) {
 
 func ObserveUnclassifiedTweets() {
 	observerUnclassifiedTweets = cron.New()
-	_, err := observerUnclassifiedTweets.AddFunc(getObserverInterval("midnight"), func() {
+	err := observerUnclassifiedTweets.AddFunc(getObserverInterval("midnight"), func() {
 		retrieveAndProcessUnclassifiedTweets()
 	})
 	if err != nil {
