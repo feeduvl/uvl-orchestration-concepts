@@ -151,15 +151,6 @@ func mockStorageTwitter(r *mux.Router) {
 	})
 }
 
-func requestBody(request *http.Request) map[string]string {
-	var body map[string]string
-	err := json.NewDecoder(request.Body).Decode(&body)
-	if err != nil {
-		panic(err)
-	}
-	return body
-}
-
 func respond(writer http.ResponseWriter, statusCode int, body interface{}) {
 	var bodyData []byte
 	var err error
