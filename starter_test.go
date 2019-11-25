@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -49,6 +51,10 @@ func makeMockHandler() http.Handler {
 	mockAnalyticsBackend(r)
 	mockCollectionExplicitFeedbackTwitter(r)
 	mockStorageTwitter(r)
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(errors.Errorf("Service method not mocked: %s", r.URL))
+		w.WriteHeader(http.StatusNotFound)
+	})
 	return r
 }
 
@@ -130,6 +136,65 @@ func tearDown() {
 	stopTestServer()
 }
 
+type endpoint struct {
+	method string
+	url    string
+}
+
+func (e endpoint) withVars(vs ...interface{}) endpoint {
+	e.url = fmt.Sprintf(e.url, vs...)
+	return e
+}
+
+func (e endpoint) executeRequest(payload interface{}) (error, *httptest.ResponseRecorder) {
+	body := new(bytes.Buffer)
+	err := json.NewEncoder(body).Encode(payload)
+	if err != nil {
+		return err, nil
+	}
+
+	req, err := http.NewRequest(e.method, e.url, body)
+	if err != nil {
+		return err, nil
+	}
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	return nil, rr
+}
+
+func (e endpoint) mustExecuteRequest(payload interface{}) *httptest.ResponseRecorder {
+	err, rr := e.executeRequest(payload)
+	if err != nil {
+		panic(errors.Wrap(err, `Could not execute request`))
+	}
+
+	return rr
+}
+
+func isSuccess(code int) bool {
+	return code >= 200 && code < 300
+}
+
+func assertSuccess(t *testing.T, rr *httptest.ResponseRecorder) {
+	if !isSuccess(rr.Code) {
+		t.Errorf("Status code differs. Expected success.\n Got status %d (%s) instead", rr.Code, http.StatusText(rr.Code))
+	}
+}
+func assertFailure(t *testing.T, rr *httptest.ResponseRecorder) {
+	if isSuccess(rr.Code) {
+		t.Errorf("Status code differs. Expected failure.\n Got status %d (%s) instead", rr.Code, http.StatusText(rr.Code))
+	}
+}
+
+func assertJsonDecodes(t *testing.T, rr *httptest.ResponseRecorder, v interface{}) {
+	err := json.Unmarshal(rr.Body.Bytes(), v)
+	if err != nil {
+		t.Error(errors.Wrap(err, "Expected valid json array"))
+	}
+}
+
 func buildRequest(method, endpoint string, payload io.Reader, t *testing.T) *http.Request {
 	req, err := http.NewRequest(method, endpoint, payload)
 	if err != nil {
@@ -150,32 +215,8 @@ func executeRequest(req *http.Request) *httptest.ResponseRecorder {
  * Test methods
  */
 
-func TestPostObserveTweets(t *testing.T) {
-	fmt.Println("start TestPostObserveTweets")
-	var method = "POST"
-	var endpoint = "/hitec/orchestration/twitter/observe/tweet/account/%s/interval/%s/lang/%s"
-
-	/*
-	 * test for faillure
-	 */
-	endpointFail := fmt.Sprintf(endpoint, "should", "fail", "30h")
-	req := buildRequest(method, endpointFail, nil, t)
-	rr := executeRequest(req)
-
-	//Confirm the response has the right status code
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusBadRequest, status)
-	}
-
-	/*
-	 * test for success
-	 */
-	endpointSuccess := fmt.Sprintf(endpoint, "WindItalia", "2h", "it")
-	req = buildRequest(method, endpointSuccess, nil, t)
-	rr = executeRequest(req)
-
-	//Confirm the response has the right status code
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, status)
-	}
+func TestPostObservableTwitterAccount(t *testing.T) {
+	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/observe/tweet/account/%s/interval/%s/lang/%s"}
+	assertFailure(t, ep.withVars("should", "fail", "en").mustExecuteRequest(nil))
+	assertSuccess(t, ep.withVars("WindItalia", "2h", "it").mustExecuteRequest(nil))
 }
