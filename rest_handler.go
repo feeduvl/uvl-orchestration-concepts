@@ -68,7 +68,7 @@ func getHTTPClient() *http.Client {
 			},
 		},
 		Timeout: timeout,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		CheckRedirect: func(req *http.Request, _ []*http.Request) error {
 			req.Header.Add(AUTHORIZATION, bearerToken)
 			return nil
 		},
