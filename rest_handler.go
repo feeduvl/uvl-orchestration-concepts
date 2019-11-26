@@ -36,8 +36,6 @@ const (
 	endpointPostClassifiedTweet              = "/ri-storage-twitter/store/classified/tweet/"
 	endpointPostTweetTopics                  = "/ri-storage-twitter/store/topics"
 
-	jsonPayload = "application/json; charset=utf-8"
-
 	GET           = "GET"
 	POST          = "POST"
 	DELETE        = "DELETE"
