@@ -20,22 +20,22 @@ var bearerToken = "Bearer " + os.Getenv("BEARER_TOKEN")
 
 const (
 	// analytics layer
-	endpointPostClassificationTwitter = "/ri-analytics-classification-twitter/lang/"
+	endpointPostClassificationTwitter = "/hitec/classify/domain/tweets/lang/"
 	endpointPostExtractTweetTopics    = "/analytics-backend/tweetClassification"
 
 	// collection layer
-	endpointGetCrawlTweets              = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
-	endpointGetCrawlAllAvailableTweets  = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s"
-	endpointGetTwitterAccountNameExists = "/ri-collection-explicit-feedback-twitter/%s/exists"
+	endpointGetCrawlTweets              = "/hitec/crawl/tweets/mention/%s/lang/%s/fast"
+	endpointGetCrawlAllAvailableTweets  = "/hitec/crawl/tweets/mention/%s/lang/%s"
+	endpointGetTwitterAccountNameExists = "/hitec/crawl/tweets/%s/exists"
 
 	// storage layer
-	endpointPostObserveTwitterAccount        = "/ri-storage-twitter/store/observable/"
-	endpointGetObservablesTwitterAccounts    = "/ri-storage-twitter/observables"
-	endpointDeleteObservablesTwitterAccounts = "/ri-storage-twitter/observables"
-	endpointGetUnclassifiedTweets            = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
-	endpointPostTweet                        = "/ri-storage-twitter/store/tweet/"
-	endpointPostClassifiedTweet              = "/ri-storage-twitter/store/classified/tweet/"
-	endpointPostTweetTopics                  = "/ri-storage-twitter/store/topics"
+	endpointPostObserveTwitterAccount        = "/hitec/repository/twitter/store/observable/"
+	endpointGetObservablesTwitterAccounts    = "/hitec/repository/twitter/observables"
+	endpointDeleteObservablesTwitterAccounts = "/hitec/repository/twitter/observables"
+	endpointGetUnclassifiedTweets            = "/hitec/repository/twitter/account_name/%s/lang/%s/unclassified"
+	endpointPostTweet                        = "/hitec/repository/twitter/store/tweet/"
+	endpointPostClassifiedTweet              = "/hitec/repository/twitter/store/classified/tweet/"
+	endpointPostTweetTopics                  = "/hitec/repository/twitter/store/topics"
 
 	GET           = "GET"
 	POST          = "POST"
