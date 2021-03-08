@@ -7,6 +7,7 @@ info:
   contact:
     email: stanik@informatik.uni-hamburg.de
 host: 129.206.78.96:9703
+basePath: /ri-orchestration-twitter
 schemes:
   - http
 paths:
