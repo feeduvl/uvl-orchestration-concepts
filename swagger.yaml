@@ -6,6 +6,7 @@ info:
   title: Orchestrate Tweet microservices
   contact:
     email: stanik@informatik.uni-hamburg.de
+host: 129.206.78.96:9703
 schemes:
   - https
 paths:
