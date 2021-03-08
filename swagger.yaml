@@ -8,7 +8,7 @@ info:
     email: stanik@informatik.uni-hamburg.de
 host: 129.206.78.96:9703
 schemes:
-  - https
+  - http
 paths:
   /hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}:
     post:
