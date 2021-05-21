@@ -1,6 +1,14 @@
 package main
 
-import "github.com/robfig/cron"
+import (
+//"encoding/json"
+)
+
+// Document model
+type Document struct {
+	Number int    `json:"number"`
+	Text   string `json:"text"`
+}
 
 // Tweet model
 type Tweet struct {
@@ -34,12 +42,6 @@ func (o ObservableTwitter) isIdentical(accountName, interval, lang string) bool 
 		return true
 	}
 	return false
-}
-
-// ObservableTwitterManager model
-type ObservableTwitterManager struct {
-	Observable ObservableTwitter
-	CronJob    *cron.Cron
 }
 
 // ResponseMessage model

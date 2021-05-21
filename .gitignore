@@ -4,3 +4,4 @@ out/*
 rest_test.http
 backups/*
 ca_chain.crt
+*.exe

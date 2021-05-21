@@ -46,8 +46,6 @@ func setup() {
 	fmt.Println("--- --- setup")
 	router = makeRouter()
 	setupMockClient()
-	initialize()
-	observer.Stop() // don't execute scheduled updates
 }
 
 func setupMockClient() {
