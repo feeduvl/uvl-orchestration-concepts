@@ -58,15 +58,24 @@ func setupMockClient() {
 
 func makeMockHandler() http.Handler {
 	r := mux.NewRouter()
-	mockAnalyticsClassificationTwitter(r)
-	mockAnalyticsBackend(r)
-	mockCollectionExplicitFeedbackTwitter(r)
-	mockStorageTwitter(r)
+	mockStorageConcepts(r)
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(errors.Errorf("Service method not mocked: %s", r.URL))
 		w.WriteHeader(http.StatusNotFound)
 	})
 	return r
+}
+
+func mockStorageConcepts(r *mux.Router) {
+	// endpointPostStoreDataset        = "/hitec/repository/concepts/store/dataset/"
+	r.HandleFunc("/hitec/repository/concepts/store/dataset/", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, nil)
+	})
+
+	// endpointPostStoreDetectionResult        = "/hitec/repository/concepts/store/detection/result/"
+	r.HandleFunc("/hitec/repository/concepts/store/detection/result/", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, nil)
+	})
 }
 
 func mockAnalyticsClassificationTwitter(r *mux.Router) {
@@ -235,6 +244,12 @@ func assertFailure(t *testing.T, rr *httptest.ResponseRecorder) {
 /*
  * Test methods
  */
+
+func TestPostNewDataset(t *testing.T) {
+	println("Running test TestpostNewDataset")
+	ep := endpoint{method: "POST", url: "/hitec/orchestration/concepts/store/dataset/"}
+	assertFailure(t, ep.mustExecuteRequest(nil))
+}
 
 func TestPostObservableTwitterAccount(t *testing.T) {
 	println("Running test TestPostObservableTwitterAccount")

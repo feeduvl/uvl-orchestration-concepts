@@ -1,7 +1,20 @@
 package main
 
-func saveDataset(dataset []byte) {
+import (
+	"encoding/json"
+)
 
-	// TODO: Implement
-	return
+func saveDataset(dataset Dataset) error {
+
+	sendData, err := json.Marshal(dataset)
+	if err != nil {
+		return err
+	}
+
+	err = RESTPostStoreDataset(sendData)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

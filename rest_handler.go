@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -20,8 +22,8 @@ const (
 	endpointConceptDetection = "/analytics-backend/concepts/detection/"
 
 	// storage layer
-	endpointStoreDataset         = "/hitec/repository/concepts/store/dataset/"
-	endpointStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
+	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
+	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -67,4 +69,24 @@ func createRequest(method string, url string, payload io.Reader) (*http.Request,
 	req.Header.Set(AUTHORIZATION, bearerToken)
 	req.Header.Add(ACCEPT, TYPE_JSON)
 	return req, err
+}
+
+// RESTPostStoreDataset returns err
+func RESTPostStoreDataset(dataset []byte) error {
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(dataset)
+	if err != nil {
+		log.Printf(errJsonMessageTemplate, err)
+		return err
+	}
+	url := baseURL + endpointPostStoreDataset
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR post store dataset %v\n", err)
+		return err
+	}
+	defer res.Body.Close()
+
+	return nil
 }

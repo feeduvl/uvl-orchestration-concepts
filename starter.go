@@ -4,6 +4,8 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	//"io"
 	"log"
 	"net/http"
@@ -42,7 +44,6 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Form data could not be retrieved"})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-		//panic(err)
 	}
 
 	file, header, err := r.FormFile("file")
@@ -50,7 +51,6 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "File error"})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-		//panic(err)
 	}
 	defer file.Close()
 
@@ -64,7 +64,6 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Process it
-	// TODO: Remove? io.Copy(&buf, file)
 	lines, err := csv.NewReader(file).ReadAll()
 	if err != nil {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
@@ -76,17 +75,18 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		var d = Document{i, line[0]}
 		a = append(a, d)
 	}
-	b, err := json.Marshal(a)
+	d := Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
+
+	// Store dataset in database
+	err = saveDataset(d)
 	if err != nil {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
+		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving dataset"})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Store dataset in database
-	saveDataset(b)
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Dataset successfully uploaded"})
+	w.WriteHeader(http.StatusOK)
 	return
 
 }

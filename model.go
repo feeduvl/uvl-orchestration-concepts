@@ -1,8 +1,14 @@
 package main
 
-import (
-//"encoding/json"
-)
+import "time"
+
+// Dataset model
+type Dataset struct {
+	UploadedAt time.Time  `json:"uploaded_at"`
+	Name       string     `json:"name"`
+	Size       int        `json:"size"`
+	Documents  []Document `json:"documents"`
+}
 
 // Document model
 type Document struct {
