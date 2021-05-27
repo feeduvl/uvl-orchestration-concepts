@@ -1,17 +1,13 @@
 package main
 
-import (
-	"encoding/json"
-)
-
 func saveDataset(dataset Dataset) error {
 
-	sendData, err := json.Marshal(dataset)
-	if err != nil {
-		return err
-	}
+	//sendData, err := json.Marshal(dataset)
+	//if err != nil {
+	//	return err
+	//}
 
-	err = RESTPostStoreDataset(sendData)
+	err := RESTPostStoreDataset(dataset)
 	if err != nil {
 		return err
 	}

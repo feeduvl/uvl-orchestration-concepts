@@ -72,7 +72,7 @@ func createRequest(method string, url string, payload io.Reader) (*http.Request,
 }
 
 // RESTPostStoreDataset returns err
-func RESTPostStoreDataset(dataset []byte) error {
+func RESTPostStoreDataset(dataset Dataset) error {
 	requestBody := new(bytes.Buffer)
 	err := json.NewEncoder(requestBody).Encode(dataset)
 	if err != nil {
