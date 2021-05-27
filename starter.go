@@ -77,7 +77,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	}
 	d := Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
 	// DEBUG
-	fmt.Printf("postNewDataset: Dataset: %s\n", d)
+	fmt.Printf("postNewDataset: Dataset: %v\n", d)
 
 	// Store dataset in database
 	err = saveDataset(d)
