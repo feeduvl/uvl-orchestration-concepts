@@ -24,6 +24,8 @@ func main() {
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"})
 
 	router := makeRouter()
+
+	fmt.Println("uvl-orchestration-concepts MS running")
 	log.Fatal(http.ListenAndServe(":9709", handlers.CORS(allowedHeaders, allowedOrigins, allowedMethods)(router)))
 }
 
@@ -60,7 +62,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	if name[1] != "csv" {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Filetype not supported"})
 		w.WriteHeader(http.StatusBadRequest)
-		panic(err)
+		return
 	}
 
 	// Process it
@@ -76,11 +78,9 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		a = append(a, d)
 	}
 	d := Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
-	// DEBUG
-	fmt.Printf("postNewDataset: Dataset: %v\n", d)
 
 	// Store dataset in database
-	err = saveDataset(d)
+	err = RESTPostStoreDataset(d)
 	if err != nil {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving dataset"})
 		w.WriteHeader(http.StatusInternalServerError)
