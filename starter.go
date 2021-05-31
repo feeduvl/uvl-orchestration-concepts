@@ -66,7 +66,10 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Process it
-	lines, err := csv.NewReader(file).ReadAll()
+	reader := csv.NewReader(file)
+	reader.Comma = ';'
+	reader.LazyQuotes = true
+	lines, err := reader.ReadAll()
 	if err != nil {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
 		w.WriteHeader(http.StatusInternalServerError)
