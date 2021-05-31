@@ -67,7 +67,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 	// Process it
 	reader := csv.NewReader(file)
-	reader.Comma = ';'
+	reader.Comma = '|'
 	reader.LazyQuotes = true
 	lines, err := reader.ReadAll()
 	if err != nil {
