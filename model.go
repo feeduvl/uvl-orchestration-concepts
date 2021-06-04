@@ -1,6 +1,8 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 // Dataset model
 type Dataset struct {
@@ -14,6 +16,14 @@ type Dataset struct {
 type Document struct {
 	Number int    `json:"number"`
 	Text   string `json:"text"`
+}
+
+// Result model
+type Result struct {
+	Method  string            `json:"method"`
+	Dataset Dataset           `json:"dataset"`
+	Status  string            `json:"status"`
+	Params  map[string]string `json:"params"`
 }
 
 // Tweet model

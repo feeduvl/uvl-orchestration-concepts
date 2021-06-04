@@ -98,10 +98,38 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
-	//params := mux.Vars(r)
+	params := mux.Vars(r)
+
+	datasetName := params["dataset"]
+	method := params["method"]
+	fmt.Printf("postStartNewDetection called. Method: %s, Dataset: %s\n", method, datasetName)
+
 	// Get Dataset from Database
+	dataset, err := RESTGetDataset(datasetName)
+	if err != nil {
+		fmt.Printf("ERROR retrieving dataset (postStartNewDetection) %s\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		panic(err)
+	}
+
+	delete(params, "method")
+	delete(params, "dataset")
+
+	result := new(Result)
+	result.Method = method
+	result.Dataset = dataset
+	result.Status = "scheduled"
+	result.Params = params
+
 	// Call detection MS
+	endResult, err := RESTPostStartNewDetection(*result)
+	if err != nil {
+		fmt.Printf("ERROR starting new detection %s\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		panic(err)
+	}
 	// Store results in database
+	fmt.Printf("Result: %s\n", endResult.Method)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})

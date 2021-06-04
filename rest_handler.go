@@ -19,11 +19,12 @@ var bearerToken = "Bearer " + os.Getenv("BEARER_TOKEN")
 
 const (
 	// analytics layer
-	endpointConceptDetection = "/analytics-backend/concepts/detection/"
+	endpointPostStartConceptDetection = "/analytics-backend/concepts/detection/"
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
 	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
+	endpointGetDataset               = "/hitec/repository/concepts/dataset/all"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -89,4 +90,50 @@ func RESTPostStoreDataset(dataset Dataset) error {
 	defer res.Body.Close()
 
 	return nil
+}
+
+// RESTGetDataset returns dataset, err
+func RESTGetDataset(datasetName string) (Dataset, error) {
+	requestBody := new(bytes.Buffer)
+	var dataset Dataset
+
+	// make request
+	url := baseURL + endpointGetDataset + datasetName
+	req, _ := createRequest(GET, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR get dataset %v\n", err)
+		return dataset, err
+	}
+
+	// parse result
+	err = json.NewDecoder(res.Body).Decode(&dataset)
+	if err != nil {
+		log.Printf("ERR get dataset %v\n", err)
+		return dataset, err
+	}
+	return dataset, err
+}
+
+// RESTPostStartNewDetection returns err
+func RESTPostStartNewDetection(result Result) (Result, error) {
+	requestBody := new(bytes.Buffer)
+
+	err := json.NewEncoder(requestBody).Encode(result)
+	if err != nil {
+		log.Printf(errJsonMessageTemplate, err)
+		return result, err
+	}
+	url := baseURL + endpointPostStartConceptDetection + result.Method
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR post start new detection %v\n", err)
+		return result, err
+	}
+	defer res.Body.Close()
+
+	// read response and add to result
+
+	return result, nil
 }
