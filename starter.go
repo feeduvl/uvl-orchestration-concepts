@@ -98,7 +98,8 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
-	params := mux.Vars(r)
+	var params = make(map[string]string)
+	err := json.NewDecoder(r.Body).Decode(&params)
 	fmt.Printf("postStartNewDetection called. Params: %v\n", params)
 
 	datasetName := params["dataset"]
