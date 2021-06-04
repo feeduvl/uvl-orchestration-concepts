@@ -114,7 +114,7 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 	return dataset, err
 }
 
-// RESTPostStartNewDetection returns err
+// RESTPostStartNewDetection returns Result ,err
 func RESTPostStartNewDetection(result Result) (Result, error) {
 	requestBody := new(bytes.Buffer)
 
@@ -124,6 +124,7 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 		return result, err
 	}
 	url := baseURL + endpointPostStartConceptDetection + result.Method
+	log.Printf("PostStartNewDetection url: %s\n", url)
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
 	if err != nil {
