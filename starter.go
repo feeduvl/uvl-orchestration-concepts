@@ -99,10 +99,11 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
+	fmt.Printf("postStartNewDetection called. Params: %v\n", params)
 
 	datasetName := params["dataset"]
 	method := params["method"]
-	fmt.Printf("postStartNewDetection called. Method: %s, Dataset: %s\n", method, datasetName)
+	fmt.Printf("postStartNewDetection called. Method: %v, Dataset: %v\n", method, datasetName)
 
 	// Get Dataset from Database
 	dataset, err := RESTGetDataset(datasetName)
