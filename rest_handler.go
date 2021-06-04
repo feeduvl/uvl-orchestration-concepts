@@ -105,7 +105,7 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 		log.Printf("ERR get dataset %v\n", err)
 		return dataset, err
 	}
-
+	log.Printf("Request body: %v\n", res.Body)
 	// parse result
 	err = json.NewDecoder(res.Body).Decode(&dataset)
 	if err != nil {
