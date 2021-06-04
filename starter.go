@@ -98,7 +98,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
-	var body = make(map[string]interface{})
+	var body map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&body)
 	fmt.Printf("postStartNewDetection called. Request Body: %v\n", r.Body)
 	fmt.Printf("postStartNewDetection called. Parsed Body: %v\n", body)
@@ -116,7 +116,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	var params map[string]string
+	var params = make(map[string]string)
 	for key, value := range body {
 		s := fmt.Sprintf("%v", value)
 		params[key] = s
