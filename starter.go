@@ -133,6 +133,8 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	result.Status = "scheduled"
 	result.Params = params
 
+	fmt.Printf("postStartNewDetection result: %v\n", result)
+
 	// Call detection MS
 	endResult, err := RESTPostStartNewDetection(*result)
 	if err != nil {
