@@ -98,7 +98,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
-	var body map[string]interface{}
+	var body = make(map[string]interface{})
 	err := json.NewDecoder(r.Body).Decode(&body)
 	fmt.Printf("postStartNewDetection called. Request Body: %v\n", r.Body)
 	fmt.Printf("postStartNewDetection called. Parsed Body: %v\n", body)
