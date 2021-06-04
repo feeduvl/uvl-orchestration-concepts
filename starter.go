@@ -125,15 +125,13 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	delete(params, "method")
 	delete(params, "dataset")
 
-	fmt.Printf("postStartNewDetection called. Params: %v\n", params)
+	fmt.Printf("postStartNewDetection Params: %v\n", params)
 
 	result := new(Result)
 	result.Method = method
 	result.Dataset = dataset
 	result.Status = "scheduled"
 	result.Params = params
-
-	fmt.Printf("postStartNewDetection result: %v\n", result)
 
 	// Call detection MS
 	endResult, err := RESTPostStartNewDetection(*result)
