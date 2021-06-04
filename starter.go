@@ -98,12 +98,14 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
-	var params = make(map[string]string)
-	err := json.NewDecoder(r.Body).Decode(&params)
-	fmt.Printf("postStartNewDetection called. Params: %v\n", params)
+	var body map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	fmt.Printf("postStartNewDetection called. Request Body: %v\n", r.Body)
+	fmt.Printf("postStartNewDetection called. Parsed Body: %v\n", body)
+	fmt.Printf("postStartNewDetection called. Error decoding body: %s\n", err)
 
-	datasetName := params["dataset"]
-	method := params["method"]
+	datasetName := body["dataset"].(string)
+	method := body["method"].(string)
 	fmt.Printf("postStartNewDetection called. Method: %v, Dataset: %v\n", method, datasetName)
 
 	// Get Dataset from Database
@@ -114,8 +116,15 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	var params map[string]string
+	for key, value := range body {
+		params[key] = value.(string)
+	}
+
 	delete(params, "method")
 	delete(params, "dataset")
+
+	fmt.Printf("postStartNewDetection called. Params: %v\n", params)
 
 	result := new(Result)
 	result.Method = method
