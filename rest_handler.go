@@ -123,7 +123,7 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 		log.Printf(errJsonMessageTemplate, err)
 		return result, err
 	}
-	url := baseURL + endpointPostStartConceptDetection + result.Method
+	url := baseURL + endpointPostStartConceptDetection + result.Method + "/run"
 	log.Printf("PostStartNewDetection url: %s\n", url)
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
