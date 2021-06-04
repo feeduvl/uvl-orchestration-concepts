@@ -24,7 +24,7 @@ const (
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
 	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
-	endpointGetDataset               = "/hitec/repository/concepts/dataset/all"
+	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -105,11 +105,10 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 		log.Printf("ERR get dataset %v\n", err)
 		return dataset, err
 	}
-	log.Printf("Request body: %v\n", res.Body)
 	// parse result
 	err = json.NewDecoder(res.Body).Decode(&dataset)
 	if err != nil {
-		log.Printf("ERR get dataset %v\n", err)
+		log.Printf("ERR parsing dataset %v\n", err)
 		return dataset, err
 	}
 	return dataset, err
