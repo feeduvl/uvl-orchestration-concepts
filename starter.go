@@ -118,7 +118,8 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	var params map[string]string
 	for key, value := range body {
-		params[key] = value.(string)
+		s := fmt.Sprintf("%v", value)
+		params[key] = s
 	}
 
 	delete(params, "method")
