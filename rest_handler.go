@@ -19,7 +19,7 @@ var bearerToken = "Bearer " + os.Getenv("BEARER_TOKEN")
 
 const (
 	// analytics layer
-	endpointPostStartConceptDetection = "/analytics-backend/concepts/detection/"
+	endpointPostStartConceptDetection = "/hitec/classify/concepts/"
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
