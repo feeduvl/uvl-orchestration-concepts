@@ -134,8 +134,8 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 	defer res.Body.Close()
 
 	// read response and add to result
-	var body map[string]interface{}
-	err = json.NewDecoder(res.Body).Decode(&body)
+	//var body map[string]interface{}
+	//err = json.NewDecoder(res.Body).Decode(&body)
 
 	_res := new(Result)
 	err = json.NewDecoder(res.Body).Decode(&_res)
