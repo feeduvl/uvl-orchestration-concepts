@@ -23,11 +23,17 @@ type Result struct {
 	Method      string                 `json:"method"`
 	Status      string                 `json:"status"`
 	StartedAt   time.Time              `json:"started_at"`
-	Dataset     Dataset                `json:"dataset"`
 	DatasetName string                 `json:"dataset_name"`
 	Params      map[string]string      `json:"params"`
 	Topics      map[string]interface{} `json:"topics"`
 	DocTopic    map[string]interface{} `json:"doc_topic"`
+}
+
+// Run model
+type Run struct {
+	Method  string            `json:"method"`
+	Dataset Dataset           `json:"dataset"`
+	Params  map[string]string `json:"params"`
 }
 
 // Tweet model

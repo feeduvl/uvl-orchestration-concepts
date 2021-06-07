@@ -129,15 +129,19 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	result := new(Result)
 	result.Method = method
-	result.Dataset = dataset
 	result.DatasetName = dataset.Name
 	result.Status = "scheduled"
 	result.StartedAt = time.Now()
 	result.Params = params
 
+	run := new(Run)
+	run.Method = method
+	run.Params = params
+	run.Dataset = dataset
+
 	fmt.Printf("postStartNewDetection, calling MS and waiting for response\n")
 	// Call detection MS
-	endResult, err := RESTPostStartNewDetection(*result)
+	endResult, err := RESTPostStartNewDetection(*result, *run)
 	if err != nil {
 		fmt.Printf("ERROR starting new detection %s\n", err)
 		w.WriteHeader(http.StatusBadRequest)

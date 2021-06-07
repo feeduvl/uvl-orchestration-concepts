@@ -115,15 +115,15 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 }
 
 // RESTPostStartNewDetection returns Result ,err
-func RESTPostStartNewDetection(result Result) (Result, error) {
+func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	requestBody := new(bytes.Buffer)
 
-	err := json.NewEncoder(requestBody).Encode(result)
+	err := json.NewEncoder(requestBody).Encode(run)
 	if err != nil {
 		log.Printf(errJsonMessageTemplate, err)
 		return result, err
 	}
-	url := baseURL + endpointPostStartConceptDetection + result.Method + "/run"
+	url := baseURL + endpointPostStartConceptDetection + run.Method + "/run"
 	log.Printf("PostStartNewDetection url: %s\n", url)
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
@@ -132,10 +132,6 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 		return result, err
 	}
 	defer res.Body.Close()
-
-	// read response and add to result
-	//var body map[string]interface{}
-	//err = json.NewDecoder(res.Body).Decode(&body)
 
 	_res := new(Result)
 	err = json.NewDecoder(res.Body).Decode(&_res)
@@ -146,7 +142,6 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 
 	result.Topics = _res.Topics
 	result.DocTopic = _res.DocTopic
-	result.Dataset = *new(Dataset)
 
 	return result, nil
 }
