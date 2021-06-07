@@ -142,7 +142,13 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	// Store results in database
-	fmt.Printf("Response received, Result: %s\n", endResult.Method)
+	fmt.Printf("Response received, Topcis: %s\n", endResult.Topics)
+	err = RESTPostStoreResult(endResult)
+	if err != nil {
+		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving result"})
+		w.WriteHeader(http.StatusInternalServerError)
+		panic(err)
+	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})

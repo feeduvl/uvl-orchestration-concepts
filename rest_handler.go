@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -137,20 +136,32 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 	// read response and add to result
 	var body map[string]interface{}
 	err = json.NewDecoder(res.Body).Decode(&body)
-	fmt.Printf("RESTPostStartNewDetection Topics: %v\n", body["topics"])
-	top := body["topics"]
-	xType := fmt.Sprintf("%T", top)
-	fmt.Println(xType)
-	dt := body["doc_topic"]
-	xType = fmt.Sprintf("%T", dt)
-	fmt.Println(xType)
-	//t := top["0"]
-	//fmt.Printf("Topic 0: %v\n", t)
-	//xType = fmt.Sprintf("%T", t)
-	//fmt.Println(xType)
 
 	_res := new(Result)
 	err = json.NewDecoder(res.Body).Decode(&_res)
 
+	result.Topics = _res.Topics
+	result.DocTopic = _res.DocTopic
+
 	return result, nil
+}
+
+// RESTPostStoreResult returns ,err
+func RESTPostStoreResult(result Result) error {
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(result)
+	if err != nil {
+		log.Printf(errJsonMessageTemplate, err)
+		return err
+	}
+	url := baseURL + endpointPostStoreDetectionResult
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR post store result %v\n", err)
+		return err
+	}
+	defer res.Body.Close()
+
+	return nil
 }
