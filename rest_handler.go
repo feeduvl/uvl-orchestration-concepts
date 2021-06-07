@@ -138,10 +138,19 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 	var body map[string]interface{}
 	err = json.NewDecoder(res.Body).Decode(&body)
 	fmt.Printf("RESTPostStartNewDetection Topics: %v\n", body["topics"])
-	xType := fmt.Sprintf("%T", body["topics"])
+	top := body["topics"]
+	xType := fmt.Sprintf("%T", top)
 	fmt.Println(xType)
-	xType = fmt.Sprintf("%T", body["doc_topic"])
+	dt := body["doc_topic"]
+	xType = fmt.Sprintf("%T", dt)
 	fmt.Println(xType)
+	//t := top["0"]
+	//fmt.Printf("Topic 0: %v\n", t)
+	//xType = fmt.Sprintf("%T", t)
+	//fmt.Println(xType)
+
+	_res := new(Result)
+	err = json.NewDecoder(res.Body).Decode(&_res)
 
 	return result, nil
 }
