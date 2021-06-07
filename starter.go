@@ -133,6 +133,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	result.Status = "scheduled"
 	result.Params = params
 
+	fmt.Printf("postStartNewDetection, calling MS and waiting for response\n")
 	// Call detection MS
 	endResult, err := RESTPostStartNewDetection(*result)
 	if err != nil {
@@ -141,7 +142,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	// Store results in database
-	fmt.Printf("Result: %s\n", endResult.Method)
+	fmt.Printf("Response received, Result: %s\n", endResult.Method)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})

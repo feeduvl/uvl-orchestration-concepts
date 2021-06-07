@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -134,6 +135,13 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 	defer res.Body.Close()
 
 	// read response and add to result
+	var body map[string]interface{}
+	err = json.NewDecoder(res.Body).Decode(&body)
+	fmt.Printf("RESTPostStartNewDetection Topics: %v\n", body["topics"])
+	xType := fmt.Sprintf("%T", body["topics"])
+	fmt.Println(xType)
+	xType = fmt.Sprintf("%T", body["doc_topic"])
+	fmt.Println(xType)
 
 	return result, nil
 }

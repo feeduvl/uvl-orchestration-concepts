@@ -21,9 +21,11 @@ type Document struct {
 // Result model
 type Result struct {
 	Method  string            `json:"method"`
-	Dataset Dataset           `json:"dataset"`
 	Status  string            `json:"status"`
+	Dataset Dataset           `json:"dataset"`
 	Params  map[string]string `json:"params"`
+	// topics
+	// doc_topic
 }
 
 // Tweet model
