@@ -139,6 +139,10 @@ func RESTPostStartNewDetection(result Result) (Result, error) {
 
 	_res := new(Result)
 	err = json.NewDecoder(res.Body).Decode(&_res)
+	if err != nil {
+		log.Printf("ERR parsing response %v\n", err)
+		return result, err
+	}
 
 	result.Topics = _res.Topics
 	result.DocTopic = _res.DocTopic
