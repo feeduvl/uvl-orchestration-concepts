@@ -135,11 +135,11 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	defer res.Body.Close()
 
 	_res := new(Result)
+	body, _ := ioutil.ReadAll(res.Body)
+	bodyString := string(body)
 	err = json.NewDecoder(res.Body).Decode(&_res)
 	if err != nil {
 		log.Printf("ERR parsing response %v\n", err)
-		body, _ := ioutil.ReadAll(res.Body)
-		bodyString := string(body)
 		log.Printf("ERR Request body: %s\n", bodyString)
 		return result, err
 	}
