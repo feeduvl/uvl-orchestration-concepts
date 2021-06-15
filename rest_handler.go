@@ -129,6 +129,7 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR post start new detection %v\n", err)
+
 		return result, err
 	}
 	defer res.Body.Close()
