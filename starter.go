@@ -107,11 +107,15 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	var body map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&body)
-	fmt.Printf("postStartNewDetection called. Request Body: %v\n", r.Body)
 	fmt.Printf("postStartNewDetection called. Parsed Body: %v\n", body)
 	fmt.Printf("postStartNewDetection called. Error decoding body: %s\n", err)
 
 	datasetName := body["dataset"].(string)
+	if datasetName == "" {
+		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	method := body["method"].(string)
 	fmt.Printf("postStartNewDetection called. Method: %v, Dataset: %v\n", method, datasetName)
 
