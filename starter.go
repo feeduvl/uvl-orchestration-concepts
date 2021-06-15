@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	//"io"
@@ -77,7 +78,13 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	}
 	var a []Document
 	for i, line := range lines {
-		var d = Document{i, line[0]}
+		var s string
+		if line[1] == "" {
+			s = strconv.Itoa(i)
+		} else {
+			s = line[1]
+		}
+		var d = Document{i, line[0], s}
 		a = append(a, d)
 	}
 	d := Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
