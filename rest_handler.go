@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -124,7 +123,6 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 		log.Printf(errJsonMessageTemplate, err)
 		return result, err
 	}
-	fmt.Printf("postStartNewDetection run struct: %s\n", requestBody)
 	url := baseURL + endpointPostStartConceptDetection + run.Method + "/run"
 	log.Printf("PostStartNewDetection url: %s\n", url)
 	req, _ := createRequest(POST, url, requestBody)
