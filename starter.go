@@ -119,6 +119,8 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	method := body["method"].(string)
 	fmt.Printf("postStartNewDetection called. Method: %v, Dataset: %v\n", method, datasetName)
 
+	name := body["name"].(string)
+
 	// Get Dataset from Database
 	dataset, err := RESTGetDataset(datasetName)
 	if err != nil {
@@ -144,6 +146,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	result.Status = "scheduled"
 	result.StartedAt = time.Now()
 	result.Params = params
+	result.Name = name
 
 	run := new(Run)
 	run.Method = method

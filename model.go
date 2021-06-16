@@ -29,6 +29,7 @@ type Result struct {
 	Topics      map[string]interface{} `json:"topics"`
 	DocTopic    map[string]interface{} `json:"doc_topic"`
 	Metrics     map[string]interface{} `json:"metrics"`
+	Name        string                 `json:"name"`
 }
 
 // Run model
