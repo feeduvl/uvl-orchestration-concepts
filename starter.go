@@ -150,8 +150,6 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	run.Params = params
 	run.Dataset = dataset
 
-	fmt.Printf("postStartNewDetection run struct: %v\n", run)
-
 	fmt.Printf("postStartNewDetection, calling MS and waiting for response\n")
 	// Call detection MS
 	endResult, err := RESTPostStartNewDetection(*result, *run)
