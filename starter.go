@@ -79,7 +79,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	var a []Document
 	for i, line := range lines {
 		var s string
-		if line[1] == "" {
+		if len(line) == 1 {
 			s = strconv.Itoa(i)
 		} else {
 			s = line[1]
