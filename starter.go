@@ -16,6 +16,8 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+
+	"github.com/360EntSecGroup-Skylar/excelize"
 )
 
 func main() {
@@ -60,34 +62,60 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	name := strings.Split(header.Filename, ".")
 	fmt.Printf("postNewDataset called. File name: %s\n", name[0])
 
-	if name[1] != "csv" && name[1] != "txt" {
+	if name[1] != "csv" && name[1] != "txt" && name[1] != "xlsx" {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Filetype not supported"})
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Process it
-	reader := csv.NewReader(file)
-	reader.Comma = '|'
-	reader.LazyQuotes = true
-	lines, err := reader.ReadAll()
-	if err != nil {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
-		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
-	}
-	var a []Document
-	for i, line := range lines {
-		var s string
-		if len(line) == 1 {
-			s = strconv.Itoa(i)
-		} else {
-			s = line[1]
+	var d = Dataset{}
+	if name[1] == "xlsx" {
+		f, err := excelize.OpenReader(file)
+		if err != nil {
+			json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx file"})
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
 		}
-		var d = Document{i, line[0], s}
-		a = append(a, d)
+		sheetName := f.GetSheetList()[0]
+		cols, err := f.GetCols(sheetName)
+		if err != nil {
+			json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx columns"})
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		}
+		fmt.Println(len(cols))
+		fmt.Println(len(cols[0]))
+		for _, rowCell := range cols[0] {
+			fmt.Println(rowCell)
+		}
+		for _, rowCell := range cols[1] {
+			fmt.Println(rowCell)
+		}
+
+	} else {
+		reader := csv.NewReader(file)
+		reader.Comma = '|'
+		reader.LazyQuotes = true
+		lines, err := reader.ReadAll()
+		if err != nil {
+			json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		}
+		var a []Document
+		for i, line := range lines {
+			var s string
+			if len(line) == 1 {
+				s = strconv.Itoa(i)
+			} else {
+				s = line[1]
+			}
+			var d = Document{i, line[0], s}
+			a = append(a, d)
+		}
+		d = Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
 	}
-	d := Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
 
 	// Store dataset in database
 	err = RESTPostStoreDataset(d)
