@@ -84,14 +84,27 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			panic(err)
 		}
-		fmt.Println(len(cols))
-		fmt.Println(len(cols[0]))
-		for _, rowCell := range cols[0] {
-			fmt.Println(rowCell)
+
+		var a []Document
+		var ids = false
+		if len(cols) > 1 {
+			ids = true
 		}
-		for _, rowCell := range cols[1] {
-			fmt.Println(rowCell)
+		for i, rowCell := range cols[0] {
+			var s string
+			if ids {
+				s = cols[1][i]
+			} else {
+				s = strconv.Itoa(i)
+			}
+			if rowCell != "" {
+				var d = Document{i, rowCell, s}
+				a = append(a, d)
+			} else {
+				break
+			}
 		}
+		d = Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
 
 	} else {
 		reader := csv.NewReader(file)
