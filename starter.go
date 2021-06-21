@@ -60,7 +60,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	name := strings.Split(header.Filename, ".")
 	fmt.Printf("postNewDataset called. File name: %s\n", name[0])
 
-	if name[1] != "csv" {
+	if name[1] != "csv" && name[1] != "txt" {
 		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Filetype not supported"})
 		w.WriteHeader(http.StatusBadRequest)
 		return
