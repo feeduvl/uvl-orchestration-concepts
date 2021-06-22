@@ -221,6 +221,8 @@ func _startNewDetection(result *Result, run *Run) {
 	endResult, err := RESTPostStartNewDetection(*result, *run)
 	if err != nil {
 		fmt.Printf("ERROR with detection %s\n", err)
+		endResult.Status = "failed"
+		_ = RESTPostStoreResult(endResult)
 		return
 	}
 
