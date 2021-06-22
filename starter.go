@@ -138,8 +138,8 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Dataset successfully uploaded"})
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Dataset successfully uploaded"})
 	return
 
 }
@@ -170,6 +170,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// Get parameters
 	var params = make(map[string]string)
 	for key, value := range body {
 		s := fmt.Sprintf("%v", value)
@@ -194,24 +195,44 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	run.Params = params
 	run.Dataset = dataset
 
-	fmt.Printf("postStartNewDetection, calling MS and waiting for response\n")
-	// Call detection MS
-	endResult, err := RESTPostStartNewDetection(*result, *run)
+	// Store result object in database (prior to getting results)
+	err = RESTPostStoreResult(*result)
 	if err != nil {
-		fmt.Printf("ERROR starting new detection %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		panic(err)
-	}
-	// Store results in database
-	fmt.Printf("Response received, Topcis: %s\n", endResult.Topics)
-	err = RESTPostStoreResult(endResult)
-	if err != nil {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving result"})
+		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving to database"})
 		w.WriteHeader(http.StatusInternalServerError)
 		panic(err)
 	}
 
+	go _startNewDetection(result, run)
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})
 	return
+}
+
+func _startNewDetection(result *Result, run *Run) {
+
+	// Change status and save it to database
+	result.Status = "started"
+	_ = RESTPostStoreResult(*result)
+
+	// Call detection MS
+	fmt.Printf("_startNewDetection, calling MS and waiting for response\n")
+	endResult, err := RESTPostStartNewDetection(*result, *run)
+	if err != nil {
+		fmt.Printf("ERROR with detection %s\n", err)
+		return
+	}
+
+	endResult.Status = "finished"
+
+	// Store results in database
+	fmt.Printf("Response received, Topcis: %s\n", endResult.Topics)
+	_ = RESTPostStoreResult(endResult)
+	if err != nil {
+		fmt.Printf("ERROR storing final result %s\n", err)
+		panic(err)
+	}
+
+	// What to do when storing the result fails?
 }
