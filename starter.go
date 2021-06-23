@@ -104,7 +104,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
-		d = Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
+		d = Dataset{Name: name[0], Size: len(a), Documents: a, UploadedAt: time.Now()}
 
 	} else {
 		reader := csv.NewReader(file)
@@ -127,7 +127,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 			var d = Document{i, line[0], s}
 			a = append(a, d)
 		}
-		d = Dataset{Name: header.Filename, Size: len(a), Documents: a, UploadedAt: time.Now()}
+		d = Dataset{Name: name[0], Size: len(a), Documents: a, UploadedAt: time.Now()}
 	}
 
 	// Store dataset in database
