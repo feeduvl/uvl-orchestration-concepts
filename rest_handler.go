@@ -46,7 +46,7 @@ func getHTTPClient() *http.Client {
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
-	timeout := time.Duration(4 * time.Minute)
+	timeout := time.Duration(8 * time.Minute)
 
 	client := &http.Client{
 		Transport: &http.Transport{
