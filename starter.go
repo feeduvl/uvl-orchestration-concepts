@@ -179,6 +179,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	delete(params, "method")
 	delete(params, "dataset")
+	delete(params, "name")
 
 	fmt.Printf("postStartNewDetection Params: %v\n", params)
 
@@ -230,7 +231,7 @@ func _startNewDetection(result *Result, run *Run) {
 
 	// Store results in database
 	fmt.Printf("Response received, Topcis: %s\n", endResult.Topics)
-	_ = RESTPostStoreResult(endResult)
+	err = RESTPostStoreResult(endResult)
 	if err != nil {
 		fmt.Printf("ERROR storing final result %s\n", err)
 		panic(err)
