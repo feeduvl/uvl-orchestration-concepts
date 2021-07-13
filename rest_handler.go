@@ -129,6 +129,8 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR post start new detection %v\n", err)
+		log.Printf("Note: If the request timed out, the method microservice may take too long to process the" +
+			" request. Consider increasing timeout in rest_handler->getHTTPClient.")
 
 		return result, err
 	}
