@@ -66,10 +66,10 @@ func getHTTPClient() *http.Client {
 }
 
 func createRequest(method string, url string, payload io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, payload)
+	req, _ := http.NewRequest(method, url, payload)
 	req.Header.Set(AUTHORIZATION, bearerToken)
 	req.Header.Add(ACCEPT, TYPE_JSON)
-	return req, err
+	return req, nil
 }
 
 // RESTPostStoreDataset returns err
@@ -87,7 +87,9 @@ func RESTPostStoreDataset(dataset Dataset) error {
 		log.Printf("ERR post store dataset %v\n", err)
 		return err
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
 
 	return nil
 }
@@ -134,7 +136,9 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 
 		return result, err
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
 
 	_res := new(Result)
 	err = json.NewDecoder(res.Body).Decode(&_res)
@@ -165,7 +169,9 @@ func RESTPostStoreResult(result Result) error {
 		log.Printf("ERR post store result %v\n", err)
 		return err
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
 
 	return nil
 }
