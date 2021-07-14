@@ -6,10 +6,17 @@ import (
 
 // Dataset model
 type Dataset struct {
-	UploadedAt time.Time  `json:"uploaded_at"`
-	Name       string     `json:"name"`
-	Size       int        `json:"size"`
-	Documents  []Document `json:"documents"`
+	UploadedAt  time.Time      `json:"uploaded_at"`
+	Name        string         `json:"name"`
+	Size        int            `json:"size"`
+	Documents   []Document     `json:"documents"`
+	GroundTruth []TruthElement `json:"ground_truth" bson:"ground_truth"`
+}
+
+//TruthElement model
+type TruthElement struct {
+	Id    string `json:"id" bson:"id"`
+	Value string `json:"value"  bson:"value"`
 }
 
 // Document model
