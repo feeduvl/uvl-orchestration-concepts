@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"strconv"
 	"time"
 
@@ -46,24 +47,26 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	// Receive new dataset
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Form data could not be retrieved"})
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Form data could not be retrieved"})
 		w.WriteHeader(http.StatusInternalServerError)
 		panic(err)
 	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "File error"})
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "File error"})
 		w.WriteHeader(http.StatusInternalServerError)
 		panic(err)
 	}
-	defer file.Close()
+	defer func(file multipart.File) {
+		_ = file.Close()
+	}(file)
 
 	name := strings.Split(header.Filename, ".")
 	fmt.Printf("postNewDataset called. File name: %s\n", name[0])
 
 	if name[1] != "csv" && name[1] != "txt" && name[1] != "xlsx" {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Filetype not supported"})
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Filetype not supported"})
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -73,14 +76,14 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	if name[1] == "xlsx" {
 		f, err := excelize.OpenReader(file)
 		if err != nil {
-			json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx file"})
+			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx file"})
 			w.WriteHeader(http.StatusInternalServerError)
 			panic(err)
 		}
 		sheetName := f.GetSheetList()[0]
 		cols, err := f.GetCols(sheetName)
 		if err != nil {
-			json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx columns"})
+			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx columns"})
 			w.WriteHeader(http.StatusInternalServerError)
 			panic(err)
 		}
@@ -112,7 +115,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		reader.LazyQuotes = true
 		lines, err := reader.ReadAll()
 		if err != nil {
-			json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
+			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
 			w.WriteHeader(http.StatusInternalServerError)
 			panic(err)
 		}
@@ -133,13 +136,13 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	// Store dataset in database
 	err = RESTPostStoreDataset(d)
 	if err != nil {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving dataset"})
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving dataset"})
 		w.WriteHeader(http.StatusInternalServerError)
 		panic(err)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Dataset successfully uploaded"})
+	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Dataset successfully uploaded"})
 	return
 
 }
@@ -153,7 +156,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	datasetName := body["dataset"].(string)
 	if datasetName == "" {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -199,7 +202,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
 	if err != nil {
-		json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving to database"})
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving to database"})
 		w.WriteHeader(http.StatusInternalServerError)
 		panic(err)
 	}
@@ -207,7 +210,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	go _startNewDetection(result, run)
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})
+	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})
 	return
 }
 
