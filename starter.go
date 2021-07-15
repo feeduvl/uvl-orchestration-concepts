@@ -172,7 +172,7 @@ func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
 
 	datasetName := r.FormValue("dataset")
 	name := strings.Split(header.Filename, ".")
-	fmt.Printf("postAddGroundTruth called. File name: %s, Dataset; %s.\n", name[0], datasetName)
+	fmt.Printf("postAddGroundTruth called. File name: %s, Dataset: %s.\n", name[0], datasetName)
 
 	// Process file content
 	var d = Dataset{}

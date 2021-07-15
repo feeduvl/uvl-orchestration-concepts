@@ -23,7 +23,7 @@ const (
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
-	endpointPostStoreGroundTruth     = "/hitec/repository/concepts/store/groundtruth"
+	endpointPostStoreGroundTruth     = "/hitec/repository/concepts/store/groundtruth/"
 	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
 	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
 
