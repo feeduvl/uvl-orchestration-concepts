@@ -36,6 +36,7 @@ func main() {
 func makeRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
 	return router
 }
@@ -115,7 +116,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		reader.LazyQuotes = true
 		lines, err := reader.ReadAll()
 		if err != nil {
-			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Processing error"})
+			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Csv processing error"})
 			w.WriteHeader(http.StatusInternalServerError)
 			panic(err)
 		}
@@ -145,6 +146,107 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Dataset successfully uploaded"})
 	return
 
+}
+
+func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Receive groundtruth
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Form data could not be retrieved"})
+		w.WriteHeader(http.StatusInternalServerError)
+		panic(err)
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "File error"})
+		w.WriteHeader(http.StatusInternalServerError)
+		panic(err)
+	}
+	defer func(file multipart.File) {
+		_ = file.Close()
+	}(file)
+
+	datasetName := r.FormValue("dataset")
+	name := strings.Split(header.Filename, ".")
+	fmt.Printf("postAddGroundTruth called. File name: %s, Dataset; %s.\n", name[0], datasetName)
+
+	// Process file content
+	var d = Dataset{}
+	if name[1] == "xlsx" {
+		f, err := excelize.OpenReader(file)
+		if err != nil {
+			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx file"})
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		}
+		sheetName := f.GetSheetList()[0]
+		cols, err := f.GetCols(sheetName)
+		if err != nil {
+			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx columns"})
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		}
+
+		var a []TruthElement
+		var ids = false
+		if len(cols) > 1 {
+			ids = true
+		}
+		for i, rowCell := range cols[0] {
+			var s string
+			if ids {
+				s = cols[1][i]
+			} else {
+				s = ""
+			}
+			if rowCell != "" {
+				var t = TruthElement{s, rowCell}
+				a = append(a, t)
+			} else {
+				break
+			}
+		}
+		d = Dataset{Name: datasetName, GroundTruth: a}
+
+	} else {
+		reader := csv.NewReader(file)
+		reader.Comma = '|'
+		reader.LazyQuotes = true
+		lines, err := reader.ReadAll()
+		if err != nil {
+			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Csv processing error"})
+			w.WriteHeader(http.StatusInternalServerError)
+			panic(err)
+		}
+		var a []TruthElement
+		for _, line := range lines {
+			var s string
+			if len(line) == 1 {
+				s = ""
+			} else {
+				s = line[1]
+			}
+			var t = TruthElement{s, line[0]}
+			a = append(a, t)
+		}
+		d = Dataset{Name: datasetName, GroundTruth: a}
+	}
+
+	// Store groundtruth in database
+	err = RESTPostStoreGroundTruth(d)
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving groundtruth"})
+		w.WriteHeader(http.StatusInternalServerError)
+		panic(err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "GroundTruth successfully uploaded"})
+	return
 }
 
 func postStartNewDetection(w http.ResponseWriter, r *http.Request) {

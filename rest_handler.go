@@ -23,6 +23,7 @@ const (
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
+	endpointPostStoreGroundTruth     = "/hitec/repository/concepts/store/groundtruth"
 	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
 	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
 
@@ -85,6 +86,28 @@ func RESTPostStoreDataset(dataset Dataset) error {
 	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR post store dataset %v\n", err)
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+
+	return nil
+}
+
+// RESTPostStoreGroundTruth returns err
+func RESTPostStoreGroundTruth(dataset Dataset) error {
+	requestBody := new(bytes.Buffer)
+	err := json.NewEncoder(requestBody).Encode(dataset)
+	if err != nil {
+		log.Printf(errJsonMessageTemplate, err)
+		return err
+	}
+	url := baseURL + endpointPostStoreGroundTruth
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR post store groundtruth %v\n", err)
 		return err
 	}
 	defer func(Body io.ReadCloser) {
