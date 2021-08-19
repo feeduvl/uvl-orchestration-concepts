@@ -1,6 +1,12 @@
 == uvl-orchestration-concepts image:https://img.shields.io/badge/License-EPL%202.0-blue.svg["EPL 2.0", link="https://www.eclipse.org/legal/epl-2.0/"]
 
-README will come soon!
+This microservice is responsible for the coordination of all microservices dealing with datasets and detection tasks. The functions include processing of uploaded data and starting detection tasks/sending the detection results to the storage.
+
+This microservice is based on link:https://github.com/feeduvl/ri-orchestration-twitter[ri-orchestration-twitter].
+
+== REST API
+
+See link:https://github.com/feeduvl/uvl-orchestration-concepts/blob/master/swagger.yaml[swagger.yaml] for details. The tool at https://editor.swagger.io/ can be used to render the swagger file.
 
 == License
 Free use of this software is granted under the terms of the EPL version 2 (EPL2.0).
