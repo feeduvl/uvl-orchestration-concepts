@@ -1,65 +1,86 @@
----
-swagger: "2.0"
+openapi: 3.0.1
 info:
-  description: This API starts the process of regularly crawling, processing, classifying and storing Tweets. This microservice depends on the microservices ri-storage-twitter, ri-collection-explicit-feedback-twitter, and ri-analytics-classification-twitter
-  version: 1.0
-  title: Orchestrate Tweet microservices
-  contact:
-    email: stanik@informatik.uni-hamburg.de
-host: 129.206.78.96:9703
-basePath: /ri-orchestration-twitter
-schemes:
-  - http
+  title: This API is for uploading data to the orchestrator or to start new detections.
+  description: This API is the orchestrator interface for datasets and run results.
+  version: "1.0"
+servers:
+  - url: 'https://feed-uvl.ifi.uni-heidelberg.de'
 paths:
-  /hitec/orchestration/twitter/observe/tweet/account/{account_name}/interval/{interval}/lang/{lang}:
+  /hitec/orchestration/concepts/store/dataset/:
     post:
-      summary: Starts the process of regularly crawling, processing, classifying and storing Tweets.
-      description: Stores the account as under observation in the ri-storage-twitter MS, then initiates a CRON job according to the interval for frequent crawling. This MS then gets tweets from ri-collection-explicit-feedback-twitter and classifies them in ri-analytics-classification-twitter. The classified tweets will be stored in ri-storage-twitter.
-      operationId: postObserveTweets
-      produces:
-      - application/json
-      parameters:
-      - name: account_name
-        in: path
-        description: the unique account name of a twitter profile.
+      summary: Upload a dataset.
+      description: 'Accept a file with a dataset. Supported file types: csv, txt, xlsx.'
+      operationId: postNewDataset
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
         required: true
-        type: string
-      - name: interval
-        in: path
-        description: how often data should be crawled
-        required: true
-        type: string
-        format: integer
-      - name: lang
-        in: path
-        description: the language the tweet was oficially labeled with
-        required: true
-        type: string
       responses:
         200:
-          description: The described process was initiated correctly.
+          description: Dataset successfully uploaded.
+          content: {}
         400:
-          description: bad input parameter or any microservice is not responding.
-  /hitec/orchestration/twitter/process/tweet/account/{account_name}/lang/{lang}:
+          description: Invalid file type.
+          content: {}
+        500:
+          description: Error with file processing.
+  /hitec/orchestration/concepts/store/groundtruth/:
     post:
-      summary: Crawl, classify, and store tweets.
-      description: Crawl, classify, and store tweets. This is a one-shot endpoint that does not support frequent crawling.
-      operationId: postProcessTweets
-      produces:
-      - application/json
-      parameters:
-      - name: account_name
-        in: path
-        description: the unique account name of a twitter profile.
+      summary: Upload groundtruth data.
+      description: 'Accept a file with groundtruth data. Supported file types: csv, txt, xlsx.'
+      operationId: postAddGroundTruth
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
         required: true
-        type: string
-      - name: lang
-        in: path
-        description: the language the tweet was oficially labeled with
-        required: true
-        type: string
       responses:
         200:
-          description: The described process was successfull.
+          description: Groundtruth successfully uploaded.
+          content: {}
         400:
-          description: bad input parameter or any microservice is not responding.
+          description: Invalid file type.
+          content: {}
+        500:
+          description: Error with file processing.
+  /hitec/orchestration/concepts/detection/:
+    post:
+      summary: Start a new detection
+      description: Start a new detection, store results in database when finished.
+      operationId: postStartNewDetection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                dataset:
+                  type: string
+                name:
+                  type: string
+                params:
+                  type: object
+        required: true
+      responses:
+        200:
+          description: Detection successfully started.
+          content: {}
+        400:
+          description: Bad input parameter.
+          content: {}
+        500:
+          description: Error with database.
+          content: {}
