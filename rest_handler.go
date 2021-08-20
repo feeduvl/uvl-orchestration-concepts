@@ -76,11 +76,7 @@ func createRequest(method string, url string, payload io.Reader) (*http.Request,
 // RESTPostStoreDataset returns err
 func RESTPostStoreDataset(dataset Dataset) error {
 	requestBody := new(bytes.Buffer)
-	err := json.NewEncoder(requestBody).Encode(dataset)
-	if err != nil {
-		log.Printf(errJsonMessageTemplate, err)
-		return err
-	}
+	_ = json.NewEncoder(requestBody).Encode(dataset)
 	url := baseURL + endpointPostStoreDataset
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
@@ -98,11 +94,8 @@ func RESTPostStoreDataset(dataset Dataset) error {
 // RESTPostStoreGroundTruth returns err
 func RESTPostStoreGroundTruth(dataset Dataset) error {
 	requestBody := new(bytes.Buffer)
-	err := json.NewEncoder(requestBody).Encode(dataset)
-	if err != nil {
-		log.Printf(errJsonMessageTemplate, err)
-		return err
-	}
+	_ = json.NewEncoder(requestBody).Encode(dataset)
+
 	url := baseURL + endpointPostStoreGroundTruth
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
@@ -143,11 +136,8 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	requestBody := new(bytes.Buffer)
 
-	err := json.NewEncoder(requestBody).Encode(run)
-	if err != nil {
-		log.Printf(errJsonMessageTemplate, err)
-		return result, err
-	}
+	_ = json.NewEncoder(requestBody).Encode(run)
+
 	url := baseURL + endpointPostStartConceptDetection + run.Method + "/run"
 	log.Printf("PostStartNewDetection url: %s\n", url)
 	req, _ := createRequest(POST, url, requestBody)
@@ -180,11 +170,8 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 // RESTPostStoreResult returns ,err
 func RESTPostStoreResult(result Result) error {
 	requestBody := new(bytes.Buffer)
-	err := json.NewEncoder(requestBody).Encode(result)
-	if err != nil {
-		log.Printf(errJsonMessageTemplate, err)
-		return err
-	}
+	_ = json.NewEncoder(requestBody).Encode(result)
+
 	url := baseURL + endpointPostStoreDetectionResult
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)

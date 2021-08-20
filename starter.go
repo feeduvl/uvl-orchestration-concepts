@@ -41,6 +41,14 @@ func makeRouter() *mux.Router {
 	return router
 }
 
+func handleErrorWithResponse(w http.ResponseWriter, err error, message string) {
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: message})
+		w.WriteHeader(http.StatusInternalServerError)
+		panic(err)
+	}
+}
+
 func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
@@ -50,15 +58,12 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Form data could not be retrieved"})
 		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
+		fmt.Printf("ERROR parsing form data: %s for request body %v\n", err, r.Body)
+		return
 	}
 
 	file, header, err := r.FormFile("file")
-	if err != nil {
-		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "File error"})
-		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
-	}
+	handleErrorWithResponse(w, err, "File error")
 	defer func(file multipart.File) {
 		_ = file.Close()
 	}(file)
@@ -76,18 +81,10 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	var d = Dataset{}
 	if name[1] == "xlsx" {
 		f, err := excelize.OpenReader(file)
-		if err != nil {
-			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx file"})
-			w.WriteHeader(http.StatusInternalServerError)
-			panic(err)
-		}
+		handleErrorWithResponse(w, err, "Error reading xlsx file")
 		sheetName := f.GetSheetList()[0]
 		cols, err := f.GetCols(sheetName)
-		if err != nil {
-			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx columns"})
-			w.WriteHeader(http.StatusInternalServerError)
-			panic(err)
-		}
+		handleErrorWithResponse(w, err, "Error reading xlsx columns")
 
 		var a []Document
 		var ids = false
@@ -115,11 +112,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 		reader.Comma = '|'
 		reader.LazyQuotes = true
 		lines, err := reader.ReadAll()
-		if err != nil {
-			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Csv processing error"})
-			w.WriteHeader(http.StatusInternalServerError)
-			panic(err)
-		}
+		handleErrorWithResponse(w, err, "Csv processing error")
 		var a []Document
 		for i, line := range lines {
 			var s string
@@ -136,11 +129,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 
 	// Store dataset in database
 	err = RESTPostStoreDataset(d)
-	if err != nil {
-		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving dataset"})
-		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
-	}
+	handleErrorWithResponse(w, err, "Error saving dataset")
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Dataset successfully uploaded"})
@@ -157,15 +146,12 @@ func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Form data could not be retrieved"})
 		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
+		fmt.Printf("ERROR decoding json: %s for request body %v\n", err, r.Body)
+		return
 	}
 
 	file, header, err := r.FormFile("file")
-	if err != nil {
-		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "File error"})
-		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
-	}
+	handleErrorWithResponse(w, err, "File error")
 	defer func(file multipart.File) {
 		_ = file.Close()
 	}(file)
@@ -178,18 +164,10 @@ func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
 	var d = Dataset{}
 	if name[1] == "xlsx" {
 		f, err := excelize.OpenReader(file)
-		if err != nil {
-			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx file"})
-			w.WriteHeader(http.StatusInternalServerError)
-			panic(err)
-		}
+		handleErrorWithResponse(w, err, "Error reading xlsx file")
 		sheetName := f.GetSheetList()[0]
 		cols, err := f.GetCols(sheetName)
-		if err != nil {
-			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error reading xlsx columns"})
-			w.WriteHeader(http.StatusInternalServerError)
-			panic(err)
-		}
+		handleErrorWithResponse(w, err, "Error reading xlsx columns")
 
 		var a []TruthElement
 		var ids = false
@@ -217,11 +195,7 @@ func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
 		reader.Comma = '|'
 		reader.LazyQuotes = true
 		lines, err := reader.ReadAll()
-		if err != nil {
-			_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Csv processing error"})
-			w.WriteHeader(http.StatusInternalServerError)
-			panic(err)
-		}
+		handleErrorWithResponse(w, err, "Csv processing error")
 		var a []TruthElement
 		for _, line := range lines {
 			var s string
@@ -238,12 +212,7 @@ func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
 
 	// Store groundtruth in database
 	err = RESTPostStoreGroundTruth(d)
-	if err != nil {
-		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving groundtruth"})
-		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
-	}
-
+	handleErrorWithResponse(w, err, "Error saving groundtruth")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "GroundTruth successfully uploaded"})
 	return
@@ -253,8 +222,11 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	var body map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&body)
-	fmt.Printf("postStartNewDetection called. Parsed Body: %v\n", body)
-	fmt.Printf("postStartNewDetection called. Error decoding body: %s\n", err)
+	if err != nil {
+		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	datasetName := body["dataset"].(string)
 	if datasetName == "" {
@@ -269,11 +241,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	// Get Dataset from Database
 	dataset, err := RESTGetDataset(datasetName)
-	if err != nil {
-		fmt.Printf("ERROR retrieving dataset (postStartNewDetection) %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		panic(err)
-	}
+	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
 
 	// Get parameters
 	var params = make(map[string]string)
@@ -303,11 +271,7 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
-	if err != nil {
-		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Error saving to database"})
-		w.WriteHeader(http.StatusInternalServerError)
-		panic(err)
-	}
+	handleErrorWithResponse(w, err, "Error saving to database")
 
 	go _startNewDetection(result, run)
 

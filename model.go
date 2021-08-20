@@ -46,20 +46,6 @@ type Run struct {
 	Params  map[string]string `json:"params"`
 }
 
-// ObservableTwitter model
-type ObservableTwitter struct {
-	AccountName string `json:"account_name"`
-	Interval    string `json:"interval"`
-	Lang        string `json:"lang"`
-}
-
-func (o ObservableTwitter) isIdentical(accountName, interval, lang string) bool {
-	if o.AccountName == accountName && o.Interval == interval && o.Lang == lang {
-		return true
-	}
-	return false
-}
-
 // ResponseMessage model
 type ResponseMessage struct {
 	Message string `json:"message"`
