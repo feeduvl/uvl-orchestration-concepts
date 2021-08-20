@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -16,18 +20,31 @@ import (
 var router *mux.Router
 var stopTestServer func()
 
-var mockTweet = map[string]interface{}{
-	"status_id":               "933476766408200200",
-	"in_reply_to_screen_name": "musteraccount",
-	"tweet_class":             "problem_report",
-	"user_name":               "maxmustermann",
-	"created_at":              20181201,
-	"favorite_count":          1,
-	"text":                    "@maxmustermann Thanks for your message!",
-	"lang":                    "en",
-	"retweet_count":           1,
+var documents []Document
+var mockDataset Dataset
+var mockResult Result
+var invalidPayloadString = "payload"
+var invalidPayload []byte
+
+func setupDataset() {
+	documents = append(documents, Document{
+		Id:   "0",
+		Text: "Text 1",
+	})
+	documents = append(documents, Document{
+		Id:   "1",
+		Text: "Text 2",
+	})
+	documents = append(documents, Document{
+		Id:   "2",
+		Text: "Text 3",
+	})
+
+	mockDataset.Documents = documents
+	mockDataset.UploadedAt = time.Now()
+	mockDataset.Name = "test"
+	mockDataset.Size = 3
 }
-var mockTweetList = []interface{}{mockTweet}
 
 func TestMain(m *testing.M) {
 	fmt.Println("--- Start Tests")
@@ -46,6 +63,7 @@ func setup() {
 	fmt.Println("--- --- setup")
 	router = makeRouter()
 	setupMockClient()
+	setupDataset()
 }
 
 func setupMockClient() {
@@ -59,6 +77,7 @@ func setupMockClient() {
 func makeMockHandler() http.Handler {
 	r := mux.NewRouter()
 	mockStorageConcepts(r)
+	mockDetectionService(r)
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(errors.Errorf("Service method not mocked: %s", r.URL))
 		w.WriteHeader(http.StatusNotFound)
@@ -72,89 +91,35 @@ func mockStorageConcepts(r *mux.Router) {
 		respond(w, http.StatusOK, nil)
 	})
 
+	// endpointPostStoreGroundTruth        = "/hitec/repository/concepts/store/groundtruth/"
+	r.HandleFunc("/hitec/repository/concepts/store/groundtruth/", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, nil)
+	})
+
 	// endpointPostStoreDetectionResult        = "/hitec/repository/concepts/store/detection/result/"
 	r.HandleFunc("/hitec/repository/concepts/store/detection/result/", func(w http.ResponseWriter, request *http.Request) {
 		respond(w, http.StatusOK, nil)
 	})
-}
 
-func mockAnalyticsClassificationTwitter(r *mux.Router) {
-	// endpointPostClassificationTwitter = "/ri-analytics-classification-twitter/lang/"
-	r.HandleFunc("/ri-analytics-classification-twitter/lang/{lang}", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, mockTweetList)
+	// endpointGetDataset     = "/hitec/repository/concepts/dataset/name/"
+	r.HandleFunc("/hitec/repository/concepts/dataset/name/test", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, mockDataset)
+	})
+	r.HandleFunc("/hitec/repository/concepts/dataset/name/failed", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusBadRequest, nil)
+	})
+	r.HandleFunc("/hitec/repository/concepts/dataset/name/failed2", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, invalidPayload)
 	})
 }
 
-func mockAnalyticsBackend(r *mux.Router) {
-	// endpointPostExtractTweetTopics    = "/analytics-backend/tweetClassification"
-	r.HandleFunc("/analytics-backend/tweetClassification", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, `{"first_class": {"label": "label1", "score": 0.7}, "second_class":  {"label":  "label2", "score": 0.5}}`)
+func mockDetectionService(r *mux.Router) {
+	// endPointPostStartConceptDetection = "/hitec/classify/concepts/"
+	r.HandleFunc("/hitec/classify/concepts/method/run", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusOK, mockResult)
 	})
-}
-
-func mockCollectionExplicitFeedbackTwitter(r *mux.Router) {
-	// endpointGetCrawlTweets              = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s/fast"
-	// endpointGetCrawlAllAvailableTweets  = "/ri-collection-explicit-feedback-twitter/mention/%s/lang/%s"
-	r.HandleFunc("/ri-collection-explicit-feedback-twitter/mention/{account}/lang/{lang}/{fast}", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, mockTweetList)
-	})
-
-	// endpointGetTwitterAccountNameExists = "/ri-collection-explicit-feedback-twitter/%s/exists"
-	r.HandleFunc("/ri-collection-explicit-feedback-twitter/{account}/exists", func(w http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		account := vars["account"]
-		fmt.Printf("Check account %s exists\n", account)
-
-		if account == "WindItalia" || account == "VodafoneUK" {
-			respond(w, http.StatusOK, map[string]interface{}{
-				"account_exists": true,
-				"message":        fmt.Sprintf("Account %s exists on Twitter", account),
-			})
-		} else {
-			respond(w, http.StatusOK, map[string]interface{}{
-				"account_exists": false,
-				"message":        fmt.Sprintf("Account %s does not exist", account),
-			})
-		}
-	})
-}
-
-func mockStorageTwitter(r *mux.Router) {
-	// endpointPostObserveTwitterAccount        = "/ri-storage-twitter/store/observable/"
-	r.HandleFunc("/ri-storage-twitter/store/observable/", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, nil)
-	})
-
-	// endpointGetObservablesTwitterAccounts    = "/ri-storage-twitter/observables"
-	// endpointDeleteObservablesTwitterAccounts = "/ri-storage-twitter/observables"
-	r.HandleFunc("/ri-storage-twitter/observables", func(w http.ResponseWriter, request *http.Request) {
-		if request.Method == "GET" {
-			respond(w, http.StatusOK, `[{"account_name": "WindItalia", "interval": "midnight", "lang": "it"}]`)
-		} else if request.Method == "DELETE" {
-			respond(w, http.StatusOK, nil)
-		} else {
-			respond(w, http.StatusMethodNotAllowed, nil)
-		}
-	})
-
-	// endpointGetUnclassifiedTweets            = "/ri-storage-twitter/account_name/%s/lang/%s/unclassified"
-	r.HandleFunc("/ri-storage-twitter/account_name/{account}/lang/{lang}/unclassified", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, mockTweetList)
-	})
-
-	// endpointPostTweet                        = "/ri-storage-twitter/store/tweet/"
-	r.HandleFunc("/ri-storage-twitter/store/tweet/", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, nil)
-	})
-
-	// endpointPostClassifiedTweet              = "/ri-storage-twitter/store/classified/tweet/"
-	r.HandleFunc("/ri-storage-twitter/store/classified/tweet/", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, nil)
-	})
-
-	// endpointPostTweetTopics                  = "/ri-storage-twitter/store/topics"
-	r.HandleFunc("/ri-storage-twitter/store/topics", func(w http.ResponseWriter, request *http.Request) {
-		respond(w, http.StatusOK, nil)
+	r.HandleFunc("/hitec/classify/concepts/fail/run", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, http.StatusNotFound, nil)
 	})
 }
 
@@ -226,6 +191,30 @@ func (e endpoint) mustExecuteRequest(payload interface{}) *httptest.ResponseReco
 	return rr
 }
 
+func (e endpoint) executeRequestForm(payload *bytes.Buffer, writer *multipart.Writer) (error, *httptest.ResponseRecorder) {
+
+	writer.Close()
+	req, err := http.NewRequest(e.method, e.url, bytes.NewReader(payload.Bytes()))
+	if err != nil {
+		return err, nil
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	return nil, rr
+}
+
+func (e endpoint) mustExecuteRequestForm(payload *bytes.Buffer, writer *multipart.Writer) *httptest.ResponseRecorder {
+	err, rr := e.executeRequestForm(payload, writer)
+	if err != nil {
+		panic(errors.Wrap(err, `Could not execute request`))
+	}
+
+	return rr
+}
+
 func isSuccess(code int) bool {
 	return code >= 200 && code < 300
 }
@@ -241,42 +230,159 @@ func assertFailure(t *testing.T, rr *httptest.ResponseRecorder) {
 	}
 }
 
+func assertMessage(t *testing.T, rr *httptest.ResponseRecorder, message string) {
+	if isSuccess(rr.Code) {
+		var response map[string]interface{}
+		_ = json.NewDecoder(rr.Body).Decode(&response)
+		if !(response["message"] == message) {
+			t.Errorf("Message differs! Got %s", response["message"])
+		}
+	}
+}
+
 /*
  * Test methods
  */
-
 func TestPostNewDataset(t *testing.T) {
-	println("Running test TestpostNewDataset")
 	ep := endpoint{method: "POST", url: "/hitec/orchestration/concepts/store/dataset/"}
-	assertFailure(t, ep.mustExecuteRequest(nil))
-}
-
-func TestPostObservableTwitterAccount(t *testing.T) {
-	println("Running test TestPostObservableTwitterAccount")
-	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/observe/tweet/account/%s/interval/%s/lang/%s"}
-	assertFailure(t, ep.withVars("should", "fail", "en").mustExecuteRequest(nil))
-	assertSuccess(t, ep.withVars("VodafoneUK", "2h", "en").mustExecuteRequest(nil))
-	assertSuccess(t, ep.withVars("VodafoneUK", "2h", "en").mustExecuteRequest(nil))                 // noop re-adding existing observable
-	assertSuccess(t, ep.withVars("VodafoneUK", "30 3-6,20-23 * * *", "en").mustExecuteRequest(nil)) // update existing observable
-}
-
-func TestPostDeleteObservableTwitterAccount(t *testing.T) {
-	println("Running test TestPostDeleteObservableTwitterAccount")
-	ep := endpoint{method: "DELETE", url: "/hitec/orchestration/twitter/observe/account/%s"}
-	assertSuccess(t, ep.withVars("VodafoneUK").mustExecuteRequest(nil))
-}
-
-func TestPostProcessTweets(t *testing.T) {
-	println("Running test TestPostProcessTweets")
-	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/process/tweet/account/%s/lang/%s/%s"}
-	assertFailure(t, ep.withVars("shouldfail", "en", "slow").mustExecuteRequest(nil))
-	assertFailure(t, ep.withVars("shouldfail", "en", "fast").mustExecuteRequest(nil))
-	assertSuccess(t, ep.withVars("WindItalia", "it", "slow").mustExecuteRequest(nil))
-	assertSuccess(t, ep.withVars("WindItalia", "it", "fast").mustExecuteRequest(nil))
-}
-
-func TestPostProcessUnclassifiedTweets(t *testing.T) {
-	println("Running test TestPostProcessUnclassifiedTweets")
-	ep := endpoint{method: "POST", url: "/hitec/orchestration/twitter/process/tweet/unclassified"}
 	assertSuccess(t, ep.mustExecuteRequest(nil))
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ := writer.CreateFormFile("file", "test.csv")
+	file, _ := os.Open("test/test.csv")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test2.csv")
+	file, _ = os.Open("test/test2.csv")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test.xlsx")
+	file, _ = os.Open("test/test.xlsx")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test2.xlsx")
+	file, _ = os.Open("test/test2.xlsx")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test.dat")
+	file, _ = os.Open("test/test.dat")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+}
+
+func TestPostAddGroundTruth(t *testing.T) {
+	ep := endpoint{method: "POST", url: "/hitec/orchestration/concepts/store/groundtruth/"}
+	assertSuccess(t, ep.mustExecuteRequest(nil))
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ := writer.CreateFormFile("file", "test.csv")
+	file, _ := os.Open("test/test.csv")
+	_, _ = io.Copy(fw, file)
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test2.csv")
+	file, _ = os.Open("test/test2.csv")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test.xlsx")
+	file, _ = os.Open("test/test.xlsx")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test2.xlsx")
+	file, _ = os.Open("test/test2.xlsx")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+
+	body = &bytes.Buffer{}
+	writer = multipart.NewWriter(body)
+	defer writer.Close()
+	fw, _ = writer.CreateFormFile("file", "test.dat")
+	file, _ = os.Open("test/test.dat")
+	_, _ = io.Copy(fw, file)
+
+	assertSuccess(t, ep.mustExecuteRequestForm(body, writer))
+}
+
+func TestPostStartNewDetection(t *testing.T) {
+	ep := endpoint{method: "POST", url: "/hitec/orchestration/concepts/detection/"}
+
+	assertFailure(t, ep.mustExecuteRequest(invalidPayloadString))
+
+	var requestBodyFail = make(map[string]interface{})
+	requestBodyFail["dataset"] = ""
+	assertMessage(t, ep.mustExecuteRequest(requestBodyFail), "Cannot start detection with no dataset.")
+
+	var requestBody = make(map[string]interface{})
+	var params = make(map[string]string)
+	params["alpha"] = "0.2"
+
+	requestBody["dataset"] = "test"
+	requestBody["method"] = "method"
+	requestBody["name"] = "test_"
+	requestBody["params"] = params
+	assertSuccess(t, ep.mustExecuteRequest(requestBody))
+
+	var result = new(Result)
+	result.Method = "method"
+	result.DatasetName = "test"
+	result.Params = params
+	var run = new(Run)
+	run.Method = "method"
+	run.Dataset = mockDataset
+	run.Params = params
+
+	assert.NotPanics(t, func() {
+		_startNewDetection(result, run)
+	})
+
+	run.Method = "fail"
+
+	assert.NotPanics(t, func() {
+		_startNewDetection(result, run)
+	})
+}
+
+func TestRESTGetDataset(t *testing.T) {
+	_, err := RESTGetDataset("failed")
+	assert.Error(t, err)
+	_, err = RESTGetDataset("failed2")
+	assert.Error(t, err)
 }
