@@ -111,6 +111,9 @@ func mockStorageConcepts(r *mux.Router) {
 	r.HandleFunc("/hitec/repository/concepts/dataset/name/failed2", func(w http.ResponseWriter, request *http.Request) {
 		respond(w, http.StatusOK, invalidPayload)
 	})
+	r.HandleFunc("/hitec/repository/concepts/dataset/name/failed3", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, 0, nil)
+	})
 }
 
 func mockDetectionService(r *mux.Router) {
@@ -120,6 +123,9 @@ func mockDetectionService(r *mux.Router) {
 	})
 	r.HandleFunc("/hitec/classify/concepts/fail/run", func(w http.ResponseWriter, request *http.Request) {
 		respond(w, http.StatusNotFound, nil)
+	})
+	r.HandleFunc("/hitec/classify/concepts/fail2/run", func(w http.ResponseWriter, request *http.Request) {
+		respond(w, 0, nil)
 	})
 }
 
@@ -378,11 +384,19 @@ func TestPostStartNewDetection(t *testing.T) {
 	assert.NotPanics(t, func() {
 		_startNewDetection(result, run)
 	})
+
+	run.Method = "fail2"
+
+	assert.NotPanics(t, func() {
+		_startNewDetection(result, run)
+	})
 }
 
 func TestRESTGetDataset(t *testing.T) {
 	_, err := RESTGetDataset("failed")
 	assert.Error(t, err)
 	_, err = RESTGetDataset("failed2")
+	assert.Error(t, err)
+	_, err = RESTGetDataset("failed3")
 	assert.Error(t, err)
 }
