@@ -5,7 +5,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"strconv"
 	"time"
@@ -353,7 +353,7 @@ func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
-	b, err := io.ReadAll(res.Body)
+	b, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
 		log.Fatalln(err)
