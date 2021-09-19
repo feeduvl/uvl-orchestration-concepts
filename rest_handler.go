@@ -27,6 +27,10 @@ const (
 	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
 	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
 
+	// annotation
+
+	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize"
+
 	GET           = "GET"
 	POST          = "POST"
 	DELETE        = "DELETE"

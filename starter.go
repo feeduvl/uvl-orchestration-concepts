@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"strconv"
 	"time"
@@ -38,6 +40,7 @@ func makeRouter() *mux.Router {
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/annotation/tokenize", postAnnotationTokenize).Methods("POST")
 	return router
 }
 
@@ -307,4 +310,55 @@ func _startNewDetection(result *Result, run *Run) {
 	}
 
 	// What to do when storing the result fails?
+}
+
+func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("postAnnotationTokenize called")
+	var body map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	datasetName := body["dataset"].(string)
+	if datasetName == "" {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	dataset, err := RESTGetDataset(datasetName)
+	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
+
+	log.Printf("Tokenizing: " + datasetName)
+
+	requestBody := new(bytes.Buffer)
+
+	url := baseURL + endpointPostAnnotationTokenize
+	_ = json.NewEncoder(requestBody).Encode(dataset)
+	req, _ := createRequest(POST, url, requestBody)
+
+	res, err := client.Do(req)
+
+	defer res.Body.Close()
+
+	if err != nil {
+		log.Printf("ERR getting tokens for annotation %v\n", err)
+		log.Printf("Note: If the request timed out, the method microservice may take too long to process the" +
+			" request. Consider increasing timeout in rest_handler->getHTTPClient.")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	b, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Printf("Got response: " + string(b))
+	w.Write(b)
 }
