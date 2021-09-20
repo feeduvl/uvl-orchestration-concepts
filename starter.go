@@ -351,7 +351,7 @@ func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(res.StatusCode)
 
 	b, err := ioutil.ReadAll(res.Body)
 
