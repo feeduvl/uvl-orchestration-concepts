@@ -40,7 +40,7 @@ func makeRouter() *mux.Router {
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
-	router.HandleFunc("/hitec/orchestration/concepts/tokenize", postAnnotationTokenize).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/tokenize/", postAnnotationTokenize).Methods("POST")
 	return router
 }
 
