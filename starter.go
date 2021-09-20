@@ -37,10 +37,12 @@ func main() {
 
 func makeRouter() *mux.Router {
 	router := mux.NewRouter()
+
+	// Init
+	router.HandleFunc("/hitec/orchestration/concepts/init/annotation", makeNewAnnotation).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
-	router.HandleFunc("/hitec/orchestration/concepts/tokenize", postAnnotationTokenize).Methods("POST")
 	return router
 }
 
@@ -312,7 +314,9 @@ func _startNewDetection(result *Result, run *Run) {
 	// What to do when storing the result fails?
 }
 
-func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
+
+// makeNewAnnotation make and return a new document annotation
+func makeNewAnnotation(w http.ResponseWriter, r * http.Request){
 	fmt.Printf("postAnnotationTokenize called")
 	var body map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -322,6 +326,7 @@ func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	annotationName := body["annotationName"].(string)
 	datasetName := body["dataset"].(string)
 	if datasetName == "" {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
@@ -329,8 +334,43 @@ func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tokenizationJsonBytes, err := getNewAnnotation(w, datasetName)
+	if err != nil {
+		fmt.Printf("Error getting tokenization, returning")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var annotation Annotation
+	if err := json.Unmarshal(tokenizationJsonBytes, &annotation); err != nil {
+		fmt.Printf("Failed to parse annotation bytes")
+		return
+	}
+
+	// initialize basic fields
+	annotation.UploadedAt = time.Now()
+	annotation.Name = annotationName
+
+	err = RESTPostStoreAnnotation(annotation)
+	if err != nil {
+		fmt.Printf("Failed to POST new annotation")
+		return
+	}
+
+	finalAnnotation, err := json.Marshal(annotation)
+	if err != nil{
+		fmt.Printf("Failed to marshal annotation")
+	}
+	w.Write(finalAnnotation)
+}
+
+// postAnnotationTokenize Tokenize a document and return the result
+func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error) {
 	dataset, err := RESTGetDataset(datasetName)
 	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
+	if err != nil {
+		return *new([]byte), err
+	}
 
 	log.Printf("Tokenizing: " + datasetName)
 
@@ -348,7 +388,7 @@ func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ERR getting tokens for annotation %v\n", err)
 		log.Printf("Note: If the request timed out, the method microservice may take too long to process the" +
 			" request. Consider increasing timeout in rest_handler->getHTTPClient.")
-		return
+		return *new([]byte), err
 	}
 
 	w.WriteHeader(res.StatusCode)
@@ -357,8 +397,9 @@ func postAnnotationTokenize(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Fatalln(err)
+		return *new([]byte), err
 	}
 
 	log.Printf("Got response: " + string(b))
-	w.Write(b)
+	return b, nil
 }

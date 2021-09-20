@@ -28,8 +28,8 @@ const (
 	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
 
 	// annotation
-
-	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize"
+	endpointPostStoreAnnotation 	 = "/hitec/repository/concepts/store/annotation/"
+	endpointPostAnnotationTokenize   = "/hitec/annotation/tokenize/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -76,6 +76,25 @@ func createRequest(method string, url string, payload io.Reader) (*http.Request,
 	req.Header.Add(ACCEPT, TYPE_JSON)
 	return req, nil
 }
+
+// RESTPostStoreAnnotation returns err
+func RESTPostStoreAnnotation(annotation Annotation) error {
+	requestBody := new(bytes.Buffer)
+	_ = json.NewEncoder(requestBody).Encode(annotation)
+	url := baseURL + endpointPostStoreAnnotation
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR post store annotation %v\n", err)
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+
+	return nil
+}
+
 
 // RESTPostStoreDataset returns err
 func RESTPostStoreDataset(dataset Dataset) error {
