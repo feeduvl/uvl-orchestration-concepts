@@ -39,7 +39,7 @@ func makeRouter() *mux.Router {
 	router := mux.NewRouter()
 
 	// Init
-	router.HandleFunc("/hitec/orchestration/concepts/init/annotation", makeNewAnnotation).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/annotationinit/", makeNewAnnotation).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
