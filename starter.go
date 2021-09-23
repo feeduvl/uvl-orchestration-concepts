@@ -314,9 +314,8 @@ func _startNewDetection(result *Result, run *Run) {
 	// What to do when storing the result fails?
 }
 
-
 // makeNewAnnotation make and return a new document annotation
-func makeNewAnnotation(w http.ResponseWriter, r * http.Request){
+func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("postAnnotationTokenize called")
 	var body map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -326,7 +325,7 @@ func makeNewAnnotation(w http.ResponseWriter, r * http.Request){
 		return
 	}
 
-	annotationName := body["annotationName"].(string)
+	annotationName := body["name"].(string)
 	datasetName := body["dataset"].(string)
 	if datasetName == "" {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
@@ -358,7 +357,7 @@ func makeNewAnnotation(w http.ResponseWriter, r * http.Request){
 	}
 
 	finalAnnotation, err := json.Marshal(annotation)
-	if err != nil{
+	if err != nil {
 		fmt.Printf("Failed to marshal annotation")
 	}
 	w.Write(finalAnnotation)
