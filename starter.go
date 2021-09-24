@@ -314,11 +314,19 @@ func _startNewDetection(result *Result, run *Run) {
 	// What to do when storing the result fails?
 }
 
+func createKeyValuePairs(m map[string]interface) string {
+	b := new(bytes.Buffer)
+	for key, value := range m {
+		fmt.Fprintf(b, "%s=\"%#v\"\n", key, value)
+	}
+	return b.String()
+}
+
 // makeNewAnnotation make and return a new document annotation
 func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("postAnnotationTokenize called")
 	var body map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&body)
+	fmt.Printf("postAnnotationTokenize called: %s", createKeyValuePairs(body))
 	if err != nil {
 		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
 		w.WriteHeader(http.StatusBadRequest)
