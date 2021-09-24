@@ -314,7 +314,7 @@ func _startNewDetection(result *Result, run *Run) {
 	// What to do when storing the result fails?
 }
 
-func createKeyValuePairs(m map[string]interface) string {
+func createKeyValuePairs(m map[string]interface{}) string {
 	b := new(bytes.Buffer)
 	for key, value := range m {
 		fmt.Fprintf(b, "%s=\"%#v\"\n", key, value)
