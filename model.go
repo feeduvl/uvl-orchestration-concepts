@@ -6,19 +6,17 @@ import (
 
 // The Annotation model
 
-
 type DocWrapper struct {
-	Index int `json:"index" bson:"index"`
-	Name string `json:"name" bson:"name"`
-	BeginIndex *int `json:"begin_index" bson:"begin_index"`
-	EndIndex *int `json:"end_index" bson:"end_index"`
+	Name       string `json:"name" bson:"name"`
+	BeginIndex *int   `json:"begin_index" bson:"begin_index"`
+	EndIndex   *int   `json:"end_index" bson:"end_index"`
 }
 
 type TORERelationship struct {
-	TOREEntity     *int                		`json:"TOREEntity" bson:"TOREEntity"`
-	TargetTokens   []*int 				`json:"target_tokens" bson:"target_tokens"`
-	RelationshipName string				`json:"relationship_name" bson:"relationship_name"`
-	Index          *int                  `json:"index" bson:"index"`
+	TOREEntity       *int   `json:"TOREEntity" bson:"TOREEntity"`
+	TargetTokens     []*int `json:"target_tokens" bson:"target_tokens"`
+	RelationshipName string `json:"relationship_name" bson:"relationship_name"`
+	Index            *int   `json:"index" bson:"index"`
 }
 
 type Code struct {
@@ -30,11 +28,11 @@ type Code struct {
 }
 
 type Token struct {
-	Index        *int   `json:"index" bson:"index"`
-	Name         string `validate:"nonzero" json:"name" bson:"name"`
-	Lemma        string `validate:"nonzero" json:"lemma" bson:"lemma"`
-	Pos          string `validate:"nonzero" json:"pos" bson:"pos"`
-	NumCodes     int    `json:"num_codes" bson:"num_codes"`
+	Index    *int   `json:"index" bson:"index"`
+	Name     string `validate:"nonzero" json:"name" bson:"name"`
+	Lemma    string `validate:"nonzero" json:"lemma" bson:"lemma"`
+	Pos      string `validate:"nonzero" json:"pos" bson:"pos"`
+	NumCodes int    `json:"num_codes" bson:"num_codes"`
 }
 
 type Annotation struct {
@@ -42,9 +40,9 @@ type Annotation struct {
 	Name       string    `validate:"nonzero" json:"name" bson:"name"`
 	Dataset    string    `validate:"nonzero" json:"dataset" bson:"dataset"`
 
-	Docs 			[]DocWrapper `json:"docs" bson:"docs"`
-	Tokens               []Token               `json:"tokens" bson:"tokens"`
-	Codes        []Code        `json:"codes" bson:"codes"`
+	Docs              []DocWrapper       `json:"docs" bson:"docs"`
+	Tokens            []Token            `json:"tokens" bson:"tokens"`
+	Codes             []Code             `json:"codes" bson:"codes"`
 	TORERelationships []TORERelationship `json:"tore_relationships" bson:"tore_relationships"`
 }
 
