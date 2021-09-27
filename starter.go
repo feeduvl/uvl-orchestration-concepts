@@ -357,6 +357,7 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 	// initialize basic fields
 	annotation.UploadedAt = time.Now()
 	annotation.Name = annotationName
+	annotation.Dataset = datasetName
 
 	err = RESTPostStoreAnnotation(annotation)
 	if err != nil {
