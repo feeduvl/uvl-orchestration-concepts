@@ -19,7 +19,8 @@ var bearerToken = "Bearer " + os.Getenv("BEARER_TOKEN")
 
 const (
 	// analytics layer
-	endpointPostStartConceptDetection = "/hitec/classify/concepts/"
+	endpointPostStartConceptDetection             = "/hitec/classify/concepts/"
+	endpointPostStartAcceptanceCriteriaGeneration = "/hitec/generate/"
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
@@ -28,8 +29,8 @@ const (
 	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
 
 	// annotation
-	endpointPostStoreAnnotation 	 = "/hitec/repository/concepts/store/annotation/"
-	endpointPostAnnotationTokenize   = "/hitec/annotation/tokenize/"
+	endpointPostStoreAnnotation    = "/hitec/repository/concepts/store/annotation/"
+	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -94,7 +95,6 @@ func RESTPostStoreAnnotation(annotation Annotation) error {
 
 	return nil
 }
-
 
 // RESTPostStoreDataset returns err
 func RESTPostStoreDataset(dataset Dataset) error {
@@ -162,6 +162,9 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	_ = json.NewEncoder(requestBody).Encode(run)
 
 	url := baseURL + endpointPostStartConceptDetection + run.Method + "/run"
+	if run.Method == "acceptance-criteria" {
+		url = baseURL + endpointPostStartAcceptanceCriteriaGeneration + run.Method + "/run"
+	}
 	log.Printf("PostStartNewDetection url: %s\n", url)
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
