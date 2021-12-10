@@ -51,6 +51,23 @@ type Annotation struct {
 
 // end Annotation model
 
+// Agreement model
+type Agreement struct {
+	CreatedAt   time.Time `validate:"nonzero" json:"created_at" bson:"created_at"`
+	LastUpdated time.Time `json:"last_updated" bson:"last_updated"`
+
+	Name        string   `validate:"nonzero" json:"name" bson:"name"`
+	Dataset     string   `validate:"nonzero" json:"dataset" bson:"dataset"`
+	Annotations []string `json:"annotationNames" bson:"annotationNames"`
+
+	Docs              []DocWrapper       `json:"docs" bson:"docs"`
+	Tokens            []Token            `json:"tokens" bson:"tokens"`
+	Codes             []Code             `json:"codes" bson:"codes"`
+	TORERelationships []TORERelationship `json:"tore_relationships" bson:"tore_relationships"`
+
+	IsMerged bool `json:"is_merged" bson:"is_merged"`
+}
+
 // Dataset model
 type Dataset struct {
 	UploadedAt  time.Time      `json:"uploaded_at"`
