@@ -30,7 +30,9 @@ const (
 
 	// annotation
 	endpointPostStoreAnnotation    = "/hitec/repository/concepts/store/annotation/"
+	endpointPostStoreAgreement     = "/hitec/repository/concepts/store/annotation/"
 	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize/"
+	endpointPostAgreementTokenize  = "/hitec/agreement/tokenize/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -87,6 +89,24 @@ func RESTPostStoreAnnotation(annotation Annotation) error {
 	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR post store annotation %v\n", err)
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+
+	return nil
+}
+
+// RESTPostStoreAgreement returns err
+func RESTPostStoreAgreement(agreement Agreement) error {
+	requestBody := new(bytes.Buffer)
+	_ = json.NewEncoder(requestBody).Encode(agreement)
+	url := baseURL + endpointPostStoreAgreement
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR post store agreement %v\n", err)
 		return err
 	}
 	defer func(Body io.ReadCloser) {

@@ -40,6 +40,7 @@ func makeRouter() *mux.Router {
 
 	// Init
 	router.HandleFunc("/hitec/orchestration/concepts/annotationinit/", makeNewAnnotation).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/agreementinit/", makeNewAgreement).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
@@ -372,6 +373,63 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 	w.Write(finalAnnotation)
 }
 
+// makeNewAgreement make and return a new document agreement
+func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
+	var body map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	fmt.Printf("postAgreementTokenize called: %s", createKeyValuePairs(body))
+	if err != nil {
+		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	agreementName := body["name"].(string)
+	datasetName := body["dataset"].(string)
+	if datasetName == "" {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	annotationNames := body["annotation"].([]string)
+	if len(annotationNames) < 2 {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with less than 2 annotations."})
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	tokenizationJsonBytes, err := getNewAgreement(w, datasetName)
+	if err != nil {
+		fmt.Printf("Error getting tokenization, returning")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var agreement Agreement
+	if err := json.Unmarshal(tokenizationJsonBytes, &agreement); err != nil {
+		fmt.Printf("Failed to parse agreement bytes")
+		return
+	}
+
+	// initialize basic fields
+	agreement.CreatedAt = time.Now()
+	agreement.Name = agreementName
+	agreement.Dataset = datasetName
+	agreement.Annotations = annotationNames
+
+	err = RESTPostStoreAgreement(agreement)
+	if err != nil {
+		fmt.Printf("Failed to POST new agreement")
+		return
+	}
+
+	finalAgreement, err := json.Marshal(agreement)
+	if err != nil {
+		fmt.Printf("Failed to marshal agreement")
+	}
+	w.Write(finalAgreement)
+}
+
 // postAnnotationTokenize Tokenize a document and return the result
 func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error) {
 	dataset, err := RESTGetDataset(datasetName)
@@ -394,6 +452,46 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error)
 
 	if err != nil {
 		log.Printf("ERR getting tokens for annotation %v\n", err)
+		log.Printf("Note: If the request timed out, the method microservice may take too long to process the" +
+			" request. Consider increasing timeout in rest_handler->getHTTPClient.")
+		return *new([]byte), err
+	}
+
+	w.WriteHeader(res.StatusCode)
+
+	b, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		log.Fatalln(err)
+		return *new([]byte), err
+	}
+
+	log.Printf("Got response: " + string(b))
+	return b, nil
+}
+
+// postAgreementTokenize Tokenize a document and return the result
+func getNewAgreement(w http.ResponseWriter, datasetName string) ([]byte, error) {
+	dataset, err := RESTGetDataset(datasetName)
+	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	log.Printf("Tokenizing: " + datasetName)
+
+	requestBody := new(bytes.Buffer)
+
+	url := baseURL + endpointPostAgreementTokenize
+	_ = json.NewEncoder(requestBody).Encode(dataset)
+	req, _ := createRequest(POST, url, requestBody)
+
+	res, err := client.Do(req)
+
+	defer res.Body.Close()
+
+	if err != nil {
+		log.Printf("ERR getting tokens for agreement %v\n", err)
 		log.Printf("Note: If the request timed out, the method microservice may take too long to process the" +
 			" request. Consider increasing timeout in rest_handler->getHTTPClient.")
 		return *new([]byte), err
