@@ -398,24 +398,28 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenizationJsonBytes, err := getNewAgreement(w, datasetName)
+	docs, tokens, toreAlternatives, wordCodeAlternatives, relationshipAlternatives, err := getInfoFromAnnotations(w, annotationNames)
 	if err != nil {
-		fmt.Printf("Error getting tokenization, returning")
+		fmt.Printf("Error getting annotations, returning")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	var agreement Agreement
-	if err := json.Unmarshal(tokenizationJsonBytes, &agreement); err != nil {
-		fmt.Printf("Failed to parse agreement bytes")
-		return
-	}
 
 	// initialize basic fields
 	agreement.CreatedAt = time.Now()
+	agreement.LastUpdated = time.Now()
 	agreement.Name = agreementName
 	agreement.Dataset = datasetName
 	agreement.Annotations = annotationNames
+
+	// fill rest of fields
+	agreement.Docs = docs
+	agreement.Tokens = tokens
+	agreement.TORECodeAlternatives = toreAlternatives
+	agreement.WordCodeAlternatives = wordCodeAlternatives
+	agreement.RelationshipAlternatives = relationshipAlternatives
 
 	err = RESTPostStoreAgreement(agreement)
 	if err != nil {
@@ -471,41 +475,67 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error)
 }
 
 // postAgreementTokenize Tokenize a document and return the result
-func getNewAgreement(w http.ResponseWriter, datasetName string) ([]byte, error) {
-	dataset, err := RESTGetDataset(datasetName)
-	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
-	if err != nil {
-		return *new([]byte), err
+func getInfoFromAnnotations(
+	w http.ResponseWriter, annotationNames []string,
+) (
+	[]DocWrapper,
+	[]Token,
+	[]TORECodeAlternatives,
+	[]WordCodeAlternatives,
+	[]RelationshipAlternatives,
+	error,
+) {
+	var tores []TORECodeAlternatives
+	var wordCodes []WordCodeAlternatives
+	var relationships []RelationshipAlternatives
+	var tokens []Token
+	var docs []DocWrapper
+
+	for i, annotationName := range annotationNames {
+		annotation, err := RESTGetAnnotation(annotationName)
+		handleErrorWithResponse(w, err, "ERROR retrieving annotation")
+		if err != nil {
+			return *new([]DocWrapper), *new([]Token), *new([]TORECodeAlternatives), *new([]WordCodeAlternatives), *new([]RelationshipAlternatives), err
+		}
+
+		log.Printf("Getting info from: " + annotationName)
+
+		// Tokens and docs stay constant, so they can be filled with any annotation
+		if i == 0 {
+			tokens = annotation.Tokens
+			docs = annotation.Docs
+		}
+
+		// Fill the alternatives individually with every single code
+		for _, code := range annotation.Codes {
+
+			var toreCode = TORECodeAlternatives{
+				AnnotationName: annotationName,
+				MergeStatus:    "Pending",
+				Tokens:         code.Tokens,
+				Tore:           code.Tore,
+			}
+			tores = append(tores, toreCode)
+
+			var wordCode = WordCodeAlternatives{
+				AnnotationName: annotationName,
+				MergeStatus:    "Pending",
+				Tokens:         code.Tokens,
+				Name:           code.Name,
+			}
+			wordCodes = append(wordCodes, wordCode)
+
+			var relationshipCode = RelationshipAlternatives{
+				AnnotationName:          annotationName,
+				MergeStatus:             "Pending",
+				Tokens:                  code.Tokens,
+				RelationshipMemberships: code.RelationshipMemberships,
+				TORERelationships:       annotation.TORERelationships,
+			}
+			relationships = append(relationships, relationshipCode)
+		}
+
 	}
 
-	log.Printf("Tokenizing: " + datasetName)
-
-	requestBody := new(bytes.Buffer)
-
-	url := baseURL + endpointPostAgreementTokenize
-	_ = json.NewEncoder(requestBody).Encode(dataset)
-	req, _ := createRequest(POST, url, requestBody)
-
-	res, err := client.Do(req)
-
-	defer res.Body.Close()
-
-	if err != nil {
-		log.Printf("ERR getting tokens for agreement %v\n", err)
-		log.Printf("Note: If the request timed out, the method microservice may take too long to process the" +
-			" request. Consider increasing timeout in rest_handler->getHTTPClient.")
-		return *new([]byte), err
-	}
-
-	w.WriteHeader(res.StatusCode)
-
-	b, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		log.Fatalln(err)
-		return *new([]byte), err
-	}
-
-	log.Printf("Got response: " + string(b))
-	return b, nil
+	return docs, tokens, tores, wordCodes, relationships, nil
 }

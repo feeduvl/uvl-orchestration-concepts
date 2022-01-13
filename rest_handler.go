@@ -26,12 +26,13 @@ const (
 	endpointPostStoreGroundTruth     = "/hitec/repository/concepts/store/groundtruth/"
 	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
 	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
-
 	// annotation
 	endpointPostStoreAnnotation    = "/hitec/repository/concepts/store/annotation/"
-	endpointPostStoreAgreement     = "/hitec/repository/concepts/store/annotation/"
 	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize/"
-	endpointPostAgreementTokenize  = "/hitec/agreement/tokenize/"
+
+	// agreement
+	endpointPostStoreAgreement = "/hitec/repository/concepts/store/agreement/"
+	endpointGetAnnotation      = "/hitec/repository/concepts/annotation/name/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -226,4 +227,26 @@ func RESTPostStoreResult(result Result) error {
 	}(res.Body)
 
 	return nil
+}
+
+// RESTGetAnnotation returns annotation, err
+func RESTGetAnnotation(annotationName string) (Annotation, error) {
+	requestBody := new(bytes.Buffer)
+	var annotation Annotation
+
+	// make request
+	url := baseURL + endpointGetAnnotation + annotationName
+	req, _ := createRequest(GET, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR get annotation %v\n", err)
+		return annotation, err
+	}
+	// parse result
+	err = json.NewDecoder(res.Body).Decode(&annotation)
+	if err != nil {
+		log.Printf("ERR parsing dataset %v\n", err)
+		return annotation, err
+	}
+	return annotation, err
 }
