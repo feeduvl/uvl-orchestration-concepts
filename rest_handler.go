@@ -19,7 +19,8 @@ var bearerToken = "Bearer " + os.Getenv("BEARER_TOKEN")
 
 const (
 	// analytics layer
-	endpointPostStartConceptDetection = "/hitec/classify/concepts/"
+	endpointPostStartConceptDetection             = "/hitec/classify/concepts/"
+	endpointPostStartAcceptanceCriteriaGeneration = "/hitec/generate/"
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
@@ -54,7 +55,7 @@ func getHTTPClient() *http.Client {
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
-	timeout := 8 * time.Minute
+	timeout := 15 * time.Minute
 
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -182,6 +183,9 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	_ = json.NewEncoder(requestBody).Encode(run)
 
 	url := baseURL + endpointPostStartConceptDetection + run.Method + "/run"
+	if run.Method == "acceptance-criteria" {
+		url = baseURL + endpointPostStartAcceptanceCriteriaGeneration + run.Method + "/run"
+	}
 	log.Printf("PostStartNewDetection url: %s\n", url)
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
