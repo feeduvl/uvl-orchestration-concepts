@@ -516,30 +516,32 @@ func getInfoFromAnnotations(
 		// Fill the alternatives individually with every single code
 		for _, code := range annotation.Codes {
 
-			var toreCode = TORECodeAlternatives{
-				AnnotationName: annotationName,
-				MergeStatus:    "Pending",
-				Tokens:         code.Tokens,
-				Tore:           code.Tore,
-			}
-			tores = append(tores, toreCode)
+			if len(code.Tokens) != 0 {
+				var toreCode = TORECodeAlternatives{
+					AnnotationName: annotationName,
+					MergeStatus:    "Pending",
+					Tokens:         code.Tokens,
+					Tore:           code.Tore,
+				}
+				tores = append(tores, toreCode)
 
-			var wordCode = WordCodeAlternatives{
-				AnnotationName: annotationName,
-				MergeStatus:    "Pending",
-				Tokens:         code.Tokens,
-				Name:           code.Name,
-			}
-			wordCodes = append(wordCodes, wordCode)
+				var wordCode = WordCodeAlternatives{
+					AnnotationName: annotationName,
+					MergeStatus:    "Pending",
+					Tokens:         code.Tokens,
+					Name:           code.Name,
+				}
+				wordCodes = append(wordCodes, wordCode)
 
-			var relationshipCode = RelationshipAlternatives{
-				AnnotationName:          annotationName,
-				MergeStatus:             "Pending",
-				Tokens:                  code.Tokens,
-				RelationshipMemberships: code.RelationshipMemberships,
-				TORERelationships:       annotation.TORERelationships,
+				var relationshipCode = RelationshipAlternatives{
+					AnnotationName:          annotationName,
+					MergeStatus:             "Pending",
+					Tokens:                  code.Tokens,
+					RelationshipMemberships: code.RelationshipMemberships,
+					TORERelationships:       annotation.TORERelationships,
+				}
+				relationships = append(relationships, relationshipCode)
 			}
-			relationships = append(relationships, relationshipCode)
 		}
 
 	}
