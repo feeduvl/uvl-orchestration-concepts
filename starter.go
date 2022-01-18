@@ -391,7 +391,14 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	annotationNames := body["annotation"].([]string)
+
+	var annotationNames []string
+	bodyAnnotationNames := body["annotationNames"].([]interface{})
+	for _, value := range bodyAnnotationNames {
+		fmt.Printf("element: %v\n", value)
+		annotationNames = append(annotationNames, value.(string))
+	}
+
 	if len(annotationNames) < 2 {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with less than 2 annotations."})
 		w.WriteHeader(http.StatusBadRequest)
