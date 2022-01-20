@@ -412,11 +412,11 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	completeConcurrences := body["completeConcurrences"].(bool)
+	//completeConcurrences := body["completeConcurrences"].(bool)
 
-	if completeConcurrences {
-		toreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives)
-	}
+	//if completeConcurrences {
+	toreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives)
+	//}
 
 	var agreement Agreement
 
