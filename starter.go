@@ -415,7 +415,7 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	//completeConcurrences := body["completeConcurrences"].(bool)
 
 	//if completeConcurrences {
-	toreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives)
+	var completedToreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives)
 	//}
 
 	var agreement Agreement
@@ -430,7 +430,7 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	// fill rest of fields
 	agreement.Docs = docs
 	agreement.Tokens = tokens
-	agreement.TORECodeAlternatives = toreAlternatives
+	agreement.TORECodeAlternatives = completedToreAlternatives
 	agreement.WordCodeAlternatives = wordCodeAlternatives
 	agreement.RelationshipAlternatives = relationshipAlternatives
 
