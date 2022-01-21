@@ -558,46 +558,50 @@ func getInfoFromAnnotations(
 func updateStatusOfToreCodeAlternatives(
 	toreAlternatives []TORECodeAlternatives,
 ) []TORECodeAlternatives {
-	type MergeCandidate struct {
-		Tokens []*int
-		Tore   string
-	}
-	var mergeCandidates []MergeCandidate
-	var rejected [][]*int
+	//type MergeCandidate struct {
+	//	Tokens []*int
+	//	Tore   string
+	//}
 	for _, tore := range toreAlternatives {
-		for _, candidate := range mergeCandidates {
-			if testEqSlice(tore.Tokens, candidate.Tokens) {
-				if tore.Tore != candidate.Tore {
-					rejected = append(rejected, candidate.Tokens)
-				}
-			} else {
-				var isAReject = false
-				for _, reject := range rejected {
-					if testEqSlice(tore.Tokens, reject) {
-						isAReject = true
-					}
-				}
-				if !isAReject {
-					mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore})
-				}
-			}
-		}
+		tore.MergeStatus = "Accepted"
 	}
-	for _, candidate := range mergeCandidates {
-		var isAccepted = false
-		for _, tore := range toreAlternatives {
-			if !isAccepted {
-				if testEqSlice(candidate.Tokens, tore.Tokens) {
-					tore.MergeStatus = "Accepted"
-					isAccepted = true
-				}
-			} else {
-				if testEqSlice(candidate.Tokens, tore.Tokens) {
-					tore.MergeStatus = "Declined"
-				}
-			}
-		}
-	}
+
+	//var mergeCandidates []MergeCandidate
+	//var rejected [][]*int
+	//for _, tore := range toreAlternatives {
+	//	for _, candidate := range mergeCandidates {
+	//		if testEqSlice(tore.Tokens, candidate.Tokens) {
+	//			if tore.Tore != candidate.Tore {
+	//				rejected = append(rejected, candidate.Tokens)
+	//			}
+	//		} else {
+	//			var isAReject = false
+	//			for _, reject := range rejected {
+	//				if testEqSlice(tore.Tokens, reject) {
+	//					isAReject = true
+	//				}
+	//			}
+	//			if !isAReject {
+	//				mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore})
+	//			}
+	//		}
+	//	}
+	//}
+	//for _, candidate := range mergeCandidates {
+	//	var isAccepted = false
+	//	for _, tore := range toreAlternatives {
+	//		if !isAccepted {
+	//			if testEqSlice(candidate.Tokens, tore.Tokens) {
+	//				tore.MergeStatus = "Accepted"
+	//				isAccepted = true
+	//			}
+	//		} else {
+	//			if testEqSlice(candidate.Tokens, tore.Tokens) {
+	//				tore.MergeStatus = "Declined"
+	//			}
+	//		}
+	//	}
+	//}
 	return toreAlternatives
 
 }
