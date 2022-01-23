@@ -413,11 +413,17 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	}
 
 	completeConcurrences := body["completeConcurrences"].(bool)
+	fmt.Printf("CompleteConcurrences is set to %t", completeConcurrences)
+	var completedToreAlternatives []TORECodeAlternatives
 
 	if completeConcurrences {
 		fmt.Printf("Automatically merge concurrent annotations")
-		toreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives)
+		completedToreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives)
+	} else {
+		completedToreAlternatives = toreAlternatives
 	}
+
+	fmt.Printf("completedToreAlternatives is set to %v", completedToreAlternatives)
 
 	var agreement Agreement
 
@@ -431,7 +437,7 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	// fill rest of fields
 	agreement.Docs = docs
 	agreement.Tokens = tokens
-	agreement.TORECodeAlternatives = toreAlternatives
+	agreement.TORECodeAlternatives = completedToreAlternatives
 	agreement.WordCodeAlternatives = wordCodeAlternatives
 	agreement.RelationshipAlternatives = relationshipAlternatives
 
