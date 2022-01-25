@@ -418,7 +418,7 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 
 	if completeConcurrences {
 		fmt.Printf("Automatically merge concurrent annotations")
-		completedToreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives)
+		completedToreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives, len(annotationNames))
 	} else {
 		completedToreAlternatives = toreAlternatives
 	}
@@ -563,19 +563,21 @@ func getInfoFromAnnotations(
 }
 
 type MergeCandidate struct {
-	Tokens []*int
-	Tore   string
+	Tokens                    []*int
+	Tore                      string
+	annotationNameOccurrences []string
 }
 
 func updateStatusOfToreCodeAlternatives(
 	toreAlternatives []TORECodeAlternatives,
+	numberOfAnnotations int,
 ) []TORECodeAlternatives {
 	var mergeCandidates []MergeCandidate
 	var rejected [][]*int
 	for _, tore := range toreAlternatives {
 		if len(mergeCandidates) == 0 {
 			if len(rejected) == 0 {
-				mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore})
+				mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore, []string{tore.AnnotationName}})
 			} else {
 				mergeCandidates, rejected = testRejection(tore, mergeCandidates, rejected)
 			}
@@ -585,6 +587,16 @@ func updateStatusOfToreCodeAlternatives(
 					if tore.Tore != candidate.Tore {
 						rejected = append(rejected, candidate.Tokens)
 						mergeCandidates = append(mergeCandidates[:i], mergeCandidates[i+1:]...)
+					} else {
+						var isNew = true
+						for _, annoNameOccurrence := range candidate.annotationNameOccurrences {
+							if annoNameOccurrence == tore.AnnotationName {
+								isNew = false
+							}
+						}
+						if isNew {
+							mergeCandidates[i].annotationNameOccurrences = append(mergeCandidates[i].annotationNameOccurrences, tore.AnnotationName)
+						}
 					}
 				} else {
 					mergeCandidates, rejected = testRejection(tore, mergeCandidates, rejected)
@@ -594,16 +606,18 @@ func updateStatusOfToreCodeAlternatives(
 
 	}
 	for _, candidate := range mergeCandidates {
-		var isAccepted = false
-		for i, tore := range toreAlternatives {
-			if !isAccepted {
-				if testEqSlice(candidate.Tokens, tore.Tokens) {
-					toreAlternatives[i].MergeStatus = "Accepted"
-					isAccepted = true
-				}
-			} else {
-				if testEqSlice(candidate.Tokens, tore.Tokens) {
-					toreAlternatives[i].MergeStatus = "Declined"
+		if len(candidate.annotationNameOccurrences) == numberOfAnnotations {
+			var isAccepted = false
+			for i, tore := range toreAlternatives {
+				if !isAccepted {
+					if testEqSlice(candidate.Tokens, tore.Tokens) {
+						toreAlternatives[i].MergeStatus = "Accepted"
+						isAccepted = true
+					}
+				} else {
+					if testEqSlice(candidate.Tokens, tore.Tokens) {
+						toreAlternatives[i].MergeStatus = "Declined"
+					}
 				}
 			}
 		}
@@ -630,7 +644,7 @@ func testRejection(
 		}
 	}
 	if !isAReject {
-		mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore})
+		mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore, []string{tore.AnnotationName}})
 	}
 	return mergeCandidates, rejected
 }
@@ -640,7 +654,7 @@ func testEqSlice(a, b []*int) bool {
 		return false
 	}
 	for i := range a {
-		if a[i] != b[i] {
+		if *a[i] != *b[i] {
 			return false
 		}
 	}
