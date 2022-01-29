@@ -52,6 +52,15 @@ type Annotation struct {
 // end Annotation model
 // The Agreement model
 
+type RelevantAgreementFields struct {
+	Docs   []DocWrapper `json:"docs" bson:"docs"`
+	Tokens []Token      `json:"tokens" bson:"tokens"`
+
+	TORECodeAlternatives     []TORECodeAlternatives     `json:"tore_code_alternatives" bson:"tore_code_alternatives"`
+	WordCodeAlternatives     []WordCodeAlternatives     `json:"word_code_alternatives" bson:"word_code_alternatives"`
+	RelationshipAlternatives []RelationshipAlternatives `json:"relationship_alternatives" bson:"relationship_alternatives"`
+}
+
 // TORECodeAlternatives model, shows all TORE-code/category alternatives from all Annotations, MergeStatus can be set to Pending, Accepted or Declined
 type TORECodeAlternatives struct {
 	//Index          *int   `json:"index" bson:"index"`

@@ -32,8 +32,8 @@ const (
 	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize/"
 
 	// agreement
-	endpointPostStoreAgreement = "/hitec/repository/concepts/store/agreement/"
-	endpointGetAnnotation      = "/hitec/repository/concepts/annotation/name/"
+	endpointPostStoreAgreement  = "/hitec/repository/concepts/store/agreement/"
+	endpointInfoFromAnnotations = "/hitec/agreement/annotationinfo/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -233,24 +233,34 @@ func RESTPostStoreResult(result Result) error {
 	return nil
 }
 
-// RESTGetAnnotation returns annotation, err
-func RESTGetAnnotation(annotationName string) (Annotation, error) {
-	requestBody := new(bytes.Buffer)
-	var annotation Annotation
+// RESTGetInfoFromAnnotations returns info from annotation,
+// including docs, tokens, toreAlternatives, wordCodeAlternatives, relationshipAlternatives, err
+func RESTGetInfoFromAnnotations(
+	annotationNames []string,
+	completeConcurrences bool,
+) (
+	RelevantAgreementFields,
+	error,
+) {
+	var relevantAgreementFields RelevantAgreementFields
 
 	// make request
-	url := baseURL + endpointGetAnnotation + annotationName
-	req, _ := createRequest(GET, url, requestBody)
+	requestBody := new(bytes.Buffer)
+	_ = json.NewEncoder(requestBody).Encode(annotationNames)
+	_ = json.NewEncoder(requestBody).Encode(completeConcurrences)
+
+	url := baseURL + endpointInfoFromAnnotations
+	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERR get annotation %v\n", err)
-		return annotation, err
+		return relevantAgreementFields, err
 	}
 	// parse result
-	err = json.NewDecoder(res.Body).Decode(&annotation)
+	err = json.NewDecoder(res.Body).Decode(&relevantAgreementFields)
 	if err != nil {
 		log.Printf("ERR parsing dataset %v\n", err)
-		return annotation, err
+		return relevantAgreementFields, err
 	}
-	return annotation, err
+	return relevantAgreementFields, err
 }

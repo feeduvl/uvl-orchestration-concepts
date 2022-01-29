@@ -405,25 +405,10 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	docs, tokens, toreAlternatives, wordCodeAlternatives, relationshipAlternatives, err := getInfoFromAnnotations(w, annotationNames)
-	if err != nil {
-		fmt.Printf("Error getting annotations, returning")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	completeConcurrences := body["completeConcurrences"].(bool)
-	fmt.Printf("CompleteConcurrences is set to %t", completeConcurrences)
-	var completedToreAlternatives []TORECodeAlternatives
 
-	if completeConcurrences {
-		fmt.Printf("Automatically merge concurrent annotations")
-		completedToreAlternatives = updateStatusOfToreCodeAlternatives(toreAlternatives, len(annotationNames))
-	} else {
-		completedToreAlternatives = toreAlternatives
-	}
-
-	fmt.Printf("completedToreAlternatives is set to %v", completedToreAlternatives)
+	relevantAgreementFields, err := RESTGetInfoFromAnnotations(annotationNames, completeConcurrences)
+	handleErrorWithResponse(w, err, "ERROR retrieving information from annotations")
 
 	var agreement Agreement
 
@@ -435,11 +420,11 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	agreement.Annotations = annotationNames
 
 	// fill rest of fields
-	agreement.Docs = docs
-	agreement.Tokens = tokens
-	agreement.TORECodeAlternatives = completedToreAlternatives
-	agreement.WordCodeAlternatives = wordCodeAlternatives
-	agreement.RelationshipAlternatives = relationshipAlternatives
+	agreement.Docs = relevantAgreementFields.Docs
+	agreement.Tokens = relevantAgreementFields.Tokens
+	agreement.TORECodeAlternatives = relevantAgreementFields.TORECodeAlternatives
+	agreement.WordCodeAlternatives = relevantAgreementFields.WordCodeAlternatives
+	agreement.RelationshipAlternatives = relevantAgreementFields.RelationshipAlternatives
 
 	err = RESTPostStoreAgreement(agreement)
 	if err != nil {
@@ -492,171 +477,4 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error)
 
 	log.Printf("Got response: " + string(b))
 	return b, nil
-}
-
-// postAgreementTokenize Tokenize a document and return the result
-func getInfoFromAnnotations(
-	w http.ResponseWriter, annotationNames []string,
-) (
-	[]DocWrapper,
-	[]Token,
-	[]TORECodeAlternatives,
-	[]WordCodeAlternatives,
-	[]RelationshipAlternatives,
-	error,
-) {
-	var tores []TORECodeAlternatives
-	var wordCodes []WordCodeAlternatives
-	var relationships []RelationshipAlternatives
-	var tokens []Token
-	var docs []DocWrapper
-
-	for i, annotationName := range annotationNames {
-		annotation, err := RESTGetAnnotation(annotationName)
-		handleErrorWithResponse(w, err, "ERROR retrieving annotation")
-		if err != nil {
-			return *new([]DocWrapper), *new([]Token), *new([]TORECodeAlternatives), *new([]WordCodeAlternatives), *new([]RelationshipAlternatives), err
-		}
-
-		log.Printf("Getting info from: " + annotationName)
-
-		// Tokens and docs stay constant, so they can be filled with any annotation
-		if i == 0 {
-			tokens = annotation.Tokens
-			docs = annotation.Docs
-		}
-
-		// Fill the alternatives individually with every single code
-		for _, code := range annotation.Codes {
-
-			if len(code.Tokens) != 0 {
-				var toreCode = TORECodeAlternatives{
-					AnnotationName: annotationName,
-					MergeStatus:    "Pending",
-					Tokens:         code.Tokens,
-					Tore:           code.Tore,
-				}
-				tores = append(tores, toreCode)
-
-				var wordCode = WordCodeAlternatives{
-					AnnotationName: annotationName,
-					MergeStatus:    "Pending",
-					Tokens:         code.Tokens,
-					Name:           code.Name,
-				}
-				wordCodes = append(wordCodes, wordCode)
-
-				var relationshipCode = RelationshipAlternatives{
-					AnnotationName:          annotationName,
-					MergeStatus:             "Pending",
-					Tokens:                  code.Tokens,
-					RelationshipMemberships: code.RelationshipMemberships,
-					TORERelationships:       annotation.TORERelationships,
-				}
-				relationships = append(relationships, relationshipCode)
-			}
-		}
-
-	}
-
-	return docs, tokens, tores, wordCodes, relationships, nil
-}
-
-type MergeCandidate struct {
-	Tokens                    []*int
-	Tore                      string
-	annotationNameOccurrences []string
-}
-
-func updateStatusOfToreCodeAlternatives(
-	toreAlternatives []TORECodeAlternatives,
-	numberOfAnnotations int,
-) []TORECodeAlternatives {
-	var mergeCandidates []MergeCandidate
-	var rejected [][]*int
-	for _, tore := range toreAlternatives {
-		if len(mergeCandidates) == 0 {
-			if len(rejected) == 0 {
-				mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore, []string{tore.AnnotationName}})
-			} else {
-				mergeCandidates, rejected = testRejection(tore, mergeCandidates, rejected)
-			}
-		} else {
-			for i, candidate := range mergeCandidates {
-				if testEqSlice(tore.Tokens, candidate.Tokens) {
-					if tore.Tore != candidate.Tore {
-						rejected = append(rejected, candidate.Tokens)
-						mergeCandidates = append(mergeCandidates[:i], mergeCandidates[i+1:]...)
-					} else {
-						var isNew = true
-						for _, annoNameOccurrence := range candidate.annotationNameOccurrences {
-							if annoNameOccurrence == tore.AnnotationName {
-								isNew = false
-							}
-						}
-						if isNew {
-							mergeCandidates[i].annotationNameOccurrences = append(mergeCandidates[i].annotationNameOccurrences, tore.AnnotationName)
-						}
-					}
-				} else {
-					mergeCandidates, rejected = testRejection(tore, mergeCandidates, rejected)
-				}
-			}
-		}
-
-	}
-	for _, candidate := range mergeCandidates {
-		if len(candidate.annotationNameOccurrences) == numberOfAnnotations {
-			var isAccepted = false
-			for i, tore := range toreAlternatives {
-				if !isAccepted {
-					if testEqSlice(candidate.Tokens, tore.Tokens) {
-						toreAlternatives[i].MergeStatus = "Accepted"
-						isAccepted = true
-					}
-				} else {
-					if testEqSlice(candidate.Tokens, tore.Tokens) {
-						toreAlternatives[i].MergeStatus = "Declined"
-					}
-				}
-			}
-		}
-	}
-	return toreAlternatives
-}
-
-func testRejection(
-	tore TORECodeAlternatives,
-	mergeCandidates []MergeCandidate,
-	rejected [][]*int,
-) ([]MergeCandidate, [][]*int) {
-
-	var isAReject = false
-	for _, reject := range rejected {
-		if testEqSlice(tore.Tokens, reject) {
-			isAReject = true
-			rejected = append(rejected, tore.Tokens)
-			for i, candidate := range mergeCandidates {
-				if testEqSlice(tore.Tokens, candidate.Tokens) {
-					mergeCandidates = append(mergeCandidates[:i], mergeCandidates[i+1:]...)
-				}
-			}
-		}
-	}
-	if !isAReject {
-		mergeCandidates = append(mergeCandidates, MergeCandidate{tore.Tokens, tore.Tore, []string{tore.AnnotationName}})
-	}
-	return mergeCandidates, rejected
-}
-
-func testEqSlice(a, b []*int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if *a[i] != *b[i] {
-			return false
-		}
-	}
-	return true
 }
