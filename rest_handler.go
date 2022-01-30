@@ -246,8 +246,11 @@ func RESTGetInfoFromAnnotations(
 
 	// make request
 	requestBody := new(bytes.Buffer)
-	_ = json.NewEncoder(requestBody).Encode(annotationNames)
-	_ = json.NewEncoder(requestBody).Encode(completeConcurrences)
+	var data = map[string]interface{}{
+		"annotationNames":      annotationNames,
+		"completeConcurrences": completeConcurrences,
+	}
+	_ = json.NewEncoder(requestBody).Encode(data)
 
 	url := baseURL + endpointInfoFromAnnotations
 	req, _ := createRequest(POST, url, requestBody)
