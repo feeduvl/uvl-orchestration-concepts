@@ -422,9 +422,7 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	// fill rest of fields
 	agreement.Docs = relevantAgreementFields.Docs
 	agreement.Tokens = relevantAgreementFields.Tokens
-	agreement.TORECodeAlternatives = relevantAgreementFields.TORECodeAlternatives
-	agreement.WordCodeAlternatives = relevantAgreementFields.WordCodeAlternatives
-	agreement.RelationshipAlternatives = relevantAgreementFields.RelationshipAlternatives
+	agreement.CodeAlternatives = relevantAgreementFields.CodeAlternatives
 
 	err = RESTPostStoreAgreement(agreement)
 	if err != nil {
