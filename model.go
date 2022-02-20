@@ -63,6 +63,7 @@ type RelevantAgreementFields struct {
 type CodeAlternatives struct {
 	AnnotationName string `json:"annotation_name" bson:"annotation_name"`
 	MergeStatus    string `validate:"nonzero" json:"merge_status" bson:"merge_status"`
+	Index          int    `json:"index" bson:"index"`
 
 	Code              Code               `json:"code" bson:"code"`
 	TORERelationships []TORERelationship `json:"tore_relationships" bson:"tore_relationships"`
