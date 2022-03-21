@@ -32,8 +32,9 @@ const (
 	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize/"
 
 	// agreement
-	endpointPostStoreAgreement  = "/hitec/repository/concepts/store/agreement/"
-	endpointInfoFromAnnotations = "/hitec/agreement/annotationinfo/"
+	endpointPostStoreAgreement            = "/hitec/repository/concepts/store/agreement/"
+	endpointInfoFromAnnotations           = "/hitec/agreement/annotationinfo/"
+	endpointCreateAnnotationFromAgreement = "/hitec/agreement/annotationexport/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -266,4 +267,31 @@ func RESTGetInfoFromAnnotations(
 		return relevantAgreementFields, err
 	}
 	return relevantAgreementFields, err
+}
+
+// RESTCreateAnnotationFromAgreement returns error,
+func RESTCreateAnnotationFromAgreement(
+	agreementName string,
+	newAnnotationName string,
+) error {
+	// make request
+	requestBody := new(bytes.Buffer)
+	var data = map[string]interface{}{
+		"agreementName":     agreementName,
+		"newAnnotationName": newAnnotationName,
+	}
+	_ = json.NewEncoder(requestBody).Encode(data)
+
+	url := baseURL + endpointCreateAnnotationFromAgreement
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR creating annotation from agreement %v\n", err)
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(res.Body)
+
+	return nil
 }

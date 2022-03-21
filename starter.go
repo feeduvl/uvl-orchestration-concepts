@@ -41,6 +41,7 @@ func makeRouter() *mux.Router {
 	// Init
 	router.HandleFunc("/hitec/orchestration/concepts/annotationinit/", makeNewAnnotation).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/agreementinit/", makeNewAgreement).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/agreementexport/", exportAgreementAsAnnotation).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
@@ -436,6 +437,38 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Failed to marshal agreement")
 	}
 	w.Write(finalAgreement)
+}
+
+// exportAgreementAsAnnotation make a new annotation from an agreement
+func exportAgreementAsAnnotation(w http.ResponseWriter, r *http.Request) {
+	var body map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	fmt.Printf("exportAgreementAsAnnotation called: %s", createKeyValuePairs(body))
+	if err != nil {
+		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	agreementName := body["agreementName"].(string)
+	newAnnotationName := body["newAnnotationName"].(string)
+	if newAnnotationName == "" {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start export with no new annotationName."})
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if agreementName == "" {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start export with no agreementName."})
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = RESTCreateAnnotationFromAgreement(agreementName, newAnnotationName)
+	handleErrorWithResponse(w, err, "ERROR exporting as annotation")
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Agreement exported as annotation."})
+	return
 }
 
 // postAnnotationTokenize Tokenize a document and return the result
