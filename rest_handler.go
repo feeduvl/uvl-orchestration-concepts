@@ -35,6 +35,7 @@ const (
 	endpointPostStoreAgreement            = "/hitec/repository/concepts/store/agreement/"
 	endpointInfoFromAnnotations           = "/hitec/agreement/annotationinfo/"
 	endpointCreateAnnotationFromAgreement = "/hitec/agreement/annotationexport/"
+	endpointCalculateKappaFromAgreement   = "/hitec/agreement/calculateKappa/"
 
 	GET           = "GET"
 	POST          = "POST"
@@ -294,4 +295,29 @@ func RESTCreateAnnotationFromAgreement(
 	}(res.Body)
 
 	return nil
+}
+
+// RESTCalculateKappaFromAgreement returns kappas, error
+func RESTCalculateKappaFromAgreement(
+	agreement Agreement,
+) (map[string]float64, error) {
+	requestBody := new(bytes.Buffer)
+	_ = json.NewEncoder(requestBody).Encode(agreement)
+
+	var data map[string]float64
+
+	url := baseURL + endpointCalculateKappaFromAgreement
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("ERR get annotation %v\n", err)
+		return data, err
+	}
+	// parse result
+	err = json.NewDecoder(res.Body).Decode(&data)
+	if err != nil {
+		log.Printf("ERR parsing dataset %v\n", err)
+		return data, err
+	}
+	return data, err
 }

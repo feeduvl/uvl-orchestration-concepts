@@ -52,6 +52,14 @@ type Annotation struct {
 // end Annotation model
 // The Agreement model
 
+// AgreementStatistics model, the initial and current kappas
+type AgreementStatistics struct {
+	InitialFleissKappa  float64 `json:"initial_fleiss_kappa" bson:"initial_fleiss_kappa"`
+	CurrentFleissKappa  float64 `json:"current_fleiss_kappa" bson:"current_fleiss_kappa"`
+	InitialBrennanKappa float64 `json:"initial_brennan_kappa" bson:"initial_brennan_kappa"`
+	CurrentBrennanKappa float64 `json:"current_brennan_kappa" bson:"current_brennan_kappa"`
+}
+
 type RelevantAgreementFields struct {
 	Docs              []DocWrapper       `json:"docs" bson:"docs"`
 	Tokens            []Token            `json:"tokens" bson:"tokens"`
@@ -82,7 +90,8 @@ type Agreement struct {
 	Tokens            []Token            `json:"tokens" bson:"tokens"`
 	TORERelationships []TORERelationship `json:"tore_relationships" bson:"tore_relationships"`
 
-	CodeAlternatives []CodeAlternatives `json:"code_alternatives" bson:"code_alternatives"`
+	CodeAlternatives    []CodeAlternatives  `json:"code_alternatives" bson:"code_alternatives"`
+	AgreementStatistics AgreementStatistics `json:"agreement_statistics" bson:"agreement_statistics"`
 
 	IsCompleted bool `json:"is_completed" bson:"is_completed"`
 }

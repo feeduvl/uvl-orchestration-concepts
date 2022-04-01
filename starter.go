@@ -426,6 +426,17 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	agreement.TORERelationships = relevantAgreementFields.TORERelationships
 	agreement.CodeAlternatives = relevantAgreementFields.CodeAlternatives
 
+	var data map[string]float64
+	data, err = RESTCalculateKappaFromAgreement(agreement)
+	if err != nil {
+		fmt.Printf("Failed to get initial kappa")
+		return
+	}
+	fleissKappa := data["fleissKappa"]
+	brennanKappa := data["brennanKappa"]
+	agreement.AgreementStatistics.InitialFleissKappa = fleissKappa
+	agreement.AgreementStatistics.InitialBrennanKappa = brennanKappa
+
 	err = RESTPostStoreAgreement(agreement)
 	if err != nil {
 		fmt.Printf("Failed to POST new agreement")
