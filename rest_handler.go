@@ -316,7 +316,7 @@ func RESTCalculateKappaFromAgreement(
 	// parse result
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
-		log.Printf("ERR parsing dataset %v\n", err)
+		log.Printf("ERR parsing incoming data %v\n", err)
 		return data, err
 	}
 	return data, err
