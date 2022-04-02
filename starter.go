@@ -435,7 +435,9 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	fleissKappa := data["fleissKappa"]
 	brennanKappa := data["brennanKappa"]
 	agreement.AgreementStatistics.InitialFleissKappa = fleissKappa
+	agreement.AgreementStatistics.CurrentFleissKappa = fleissKappa
 	agreement.AgreementStatistics.InitialBrennanKappa = brennanKappa
+	agreement.AgreementStatistics.CurrentBrennanKappa = brennanKappa
 
 	err = RESTPostStoreAgreement(agreement)
 	if err != nil {
