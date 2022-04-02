@@ -434,10 +434,18 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	}
 	fleissKappa := data["fleissKappa"]
 	brennanKappa := data["brennanKappa"]
-	agreement.AgreementStatistics.InitialFleissKappa = fleissKappa
-	agreement.AgreementStatistics.CurrentFleissKappa = fleissKappa
-	agreement.AgreementStatistics.InitialBrennanKappa = brennanKappa
-	agreement.AgreementStatistics.CurrentBrennanKappa = brennanKappa
+	var fleissKappaStats = AgreementStatistics{
+		"fleiss",
+		fleissKappa,
+		fleissKappa,
+	}
+	var brennanKappaStats = AgreementStatistics{
+		"brennan-and-prediger",
+		brennanKappa,
+		brennanKappa,
+	}
+	agreement.AgreementStatistics = append(agreement.AgreementStatistics, fleissKappaStats)
+	agreement.AgreementStatistics = append(agreement.AgreementStatistics, brennanKappaStats)
 
 	err = RESTPostStoreAgreement(agreement)
 	if err != nil {
