@@ -559,12 +559,12 @@ func refreshStatisticsOfAgreement(w http.ResponseWriter, r *http.Request) {
 	}
 	fleissKappa := data["fleissKappa"]
 	brennanKappa := data["brennanKappa"]
-	for _, kappa := range agreement.AgreementStatistics {
+	for i, kappa := range agreement.AgreementStatistics {
 		if kappa.KappaName == "fleiss" {
-			kappa.CurrentKappa = fleissKappa
+			agreement.AgreementStatistics[i].CurrentKappa = fleissKappa
 		}
 		if kappa.KappaName == "brennan-and-prediger" {
-			kappa.CurrentKappa = brennanKappa
+			agreement.AgreementStatistics[i].CurrentKappa = brennanKappa
 		}
 	}
 
