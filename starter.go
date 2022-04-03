@@ -23,6 +23,11 @@ import (
 	"github.com/360EntSecGroup-Skylar/excelize"
 )
 
+const (
+	contentTypeKey     = "Content-Type"
+	contentTypeValJSON = "application/json"
+)
+
 func main() {
 	log.SetOutput(os.Stdout)
 	allowedHeaders := handlers.AllowedHeaders([]string{"X-Requested-With"})
@@ -42,6 +47,7 @@ func makeRouter() *mux.Router {
 	router.HandleFunc("/hitec/orchestration/concepts/annotationinit/", makeNewAnnotation).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/agreementinit/", makeNewAgreement).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/agreementexport/", exportAgreementAsAnnotation).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/statistics/refresh/", refreshStatisticsOfAgreement).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
@@ -530,4 +536,46 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error)
 
 	log.Printf("Got response: " + string(b))
 	return b, nil
+}
+
+//  refresh statistics of an existing agreement
+func refreshStatisticsOfAgreement(w http.ResponseWriter, r *http.Request) {
+	var agreement Agreement
+	err := json.NewDecoder(r.Body).Decode(&agreement)
+
+	fmt.Printf("refreshStatisticsOfAgreement called. Agreement: %s\n", agreement.Name)
+
+	if err != nil {
+		fmt.Printf("ERROR decoding json: %s for request body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		panic(err)
+	}
+
+	// Calculate current Kappa
+	data, err := RESTCalculateKappaFromAgreement(agreement)
+	if err != nil {
+		fmt.Printf("Failed to get current kappa")
+		return
+	}
+	fleissKappa := data["fleissKappa"]
+	brennanKappa := data["brennanKappa"]
+	for _, kappa := range agreement.AgreementStatistics {
+		if kappa.KappaName == "fleiss" {
+			kappa.CurrentKappa = fleissKappa
+		}
+		if kappa.KappaName == "brennan-and-prediger" {
+			kappa.CurrentKappa = brennanKappa
+		}
+	}
+
+	err = RESTPostStoreAgreement(agreement)
+	if err != nil {
+		fmt.Printf("Failed to POST updates to agreement")
+		return
+	}
+
+	// write the response
+	w.Header().Set(contentTypeKey, contentTypeValJSON)
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(agreement.AgreementStatistics)
 }
