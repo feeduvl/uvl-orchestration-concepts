@@ -441,12 +441,12 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	fleissKappa := data["fleissKappa"]
 	brennanKappa := data["brennanKappa"]
 	var fleissKappaStats = AgreementStatistics{
-		"fleiss",
+		"Fleiss",
 		fleissKappa,
 		fleissKappa,
 	}
 	var brennanKappaStats = AgreementStatistics{
-		"brennan-and-prediger",
+		"Brennan & Prediger",
 		brennanKappa,
 		brennanKappa,
 	}
