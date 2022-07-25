@@ -59,6 +59,7 @@ type AgreementStatistics struct {
 	CurrentKappa float64 `json:"current_kappa" bson:"current_kappa"`
 }
 
+// Only used inside this container, and for optimization
 type RelevantAgreementFields struct {
 	Docs              []DocWrapper       `json:"docs" bson:"docs"`
 	Tokens            []Token            `json:"tokens" bson:"tokens"`

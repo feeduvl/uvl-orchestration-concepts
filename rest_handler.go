@@ -264,13 +264,13 @@ func RESTGetInfoFromAnnotations(
 	// parse result
 	err = json.NewDecoder(res.Body).Decode(&relevantAgreementFields)
 	if err != nil {
-		log.Printf("ERR parsing dataset %v\n", err)
+		log.Printf("ERR parsing relevant agreement fields %v\n", err)
 		return relevantAgreementFields, err
 	}
 	return relevantAgreementFields, err
 }
 
-// RESTCreateAnnotationFromAgreement returns error,
+// RESTCreateAnnotationFromAgreement returns error
 func RESTCreateAnnotationFromAgreement(
 	agreementName string,
 	newAnnotationName string,
@@ -283,6 +283,7 @@ func RESTCreateAnnotationFromAgreement(
 	}
 	_ = json.NewEncoder(requestBody).Encode(data)
 
+	// get response
 	url := baseURL + endpointCreateAnnotationFromAgreement
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
@@ -310,7 +311,7 @@ func RESTCalculateKappaFromAgreement(
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
 	if err != nil {
-		log.Printf("ERR get annotation %v\n", err)
+		log.Printf("ERR calculate kappas %v\n", err)
 		return data, err
 	}
 	// parse result
