@@ -131,6 +131,7 @@ type Result struct {
 	DocTopic    map[string]interface{} `json:"doc_topic"`
 	Metrics     map[string]interface{} `json:"metrics"`
 	Name        string                 `json:"name"`
+	Codes       []Code                 `json:"codes"`
 }
 
 // Run model
