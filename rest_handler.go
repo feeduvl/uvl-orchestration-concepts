@@ -212,6 +212,7 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	result.Topics = _res.Topics
 	result.DocTopic = _res.DocTopic
 	result.Metrics = _res.Metrics
+	result.Codes = _res.Codes
 
 	return result, nil
 }
