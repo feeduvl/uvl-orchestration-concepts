@@ -313,6 +313,7 @@ func _startNewDetection(result *Result, run *Run) {
 
 	// Store results in database
 	fmt.Printf("Response received, Topics: %s\n", endResult.Topics)
+	fmt.Printf("Response received, Codes: %s\n", endResult.Codes)
 	err = RESTPostStoreResult(endResult)
 	if err != nil {
 		fmt.Printf("ERROR storing final result %s\n", err)
