@@ -1,7 +1,7 @@
-FROM golang:1.13
+FROM golang:1.19.4
 WORKDIR /go/src/app
 COPY . .
-RUN go get -d -v ./...
+RUN go mod -d -v ./...
 RUN go install -v ./...
 
 EXPOSE 9709
