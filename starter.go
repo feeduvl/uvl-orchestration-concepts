@@ -95,8 +95,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	if name[1] == "xlsx" {
 		f, err := excelize.OpenReader(file)
 		handleErrorWithResponse(w, err, "Error reading xlsx file")
-		sheetMap := f.GetSheetMap()
-		sheetName := sheetMap[1]
+		sheetName := f.GetSheetList()[0]
 		cols, err := f.GetCols(sheetName)
 		handleErrorWithResponse(w, err, "Error reading xlsx columns")
 
@@ -178,8 +177,7 @@ func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
 	if name[1] == "xlsx" {
 		f, err := excelize.OpenReader(file)
 		handleErrorWithResponse(w, err, "Error reading xlsx file")
-		sheetMap := f.GetSheetMap()
-		sheetName := sheetMap[1]
+		sheetName := f.GetSheetList()[0]
 		cols, err := f.GetCols(sheetName)
 		handleErrorWithResponse(w, err, "Error reading xlsx columns")
 
