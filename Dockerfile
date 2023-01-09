@@ -1,6 +1,7 @@
 FROM golang:1.19.4
 WORKDIR /go/src/app
 COPY . .
+RUN go clean -modcache
 RUN go mod init
 RUN go mod tidy
 RUN go get -d -v ./...
