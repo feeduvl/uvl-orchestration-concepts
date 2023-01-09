@@ -95,7 +95,8 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	if name[1] == "xlsx" {
 		f, err := excelize.OpenReader(file)
 		handleErrorWithResponse(w, err, "Error reading xlsx file")
-		sheetName := f.GetSheetList()[0]
+		sheetMap := f.GetSheetMap()
+		sheetName := sheetMap[1]
 		cols, err := f.GetCols(sheetName)
 		handleErrorWithResponse(w, err, "Error reading xlsx columns")
 
