@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"github.com/qax-os/excelize@2.7.0"
+	"github.com/qax-os/excelize"
 )
 
 const (
