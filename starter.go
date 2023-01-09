@@ -93,7 +93,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	// Process it
 	var d = Dataset{}
 	if name[1] == "xlsx" {
-		f, err := excelize.OpenReader(file)
+		f, err := excelize.OpenFile(file)
 		handleErrorWithResponse(w, err, "Error reading xlsx file")
 		sheetName := f.GetSheetList()[0]
 		cols, err := f.GetCols(sheetName)
