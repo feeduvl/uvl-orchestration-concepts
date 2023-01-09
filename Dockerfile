@@ -4,7 +4,7 @@ COPY . .
 
 RUN go mod init
 
-RUN go install github.com/360EntSecGroup-Skylar/excelize@2.7.0
+RUN go install github.com/360EntSecGroup-Skylar/excelize@latest
 
 RUN go get -d -v ./...
 RUN go install -v ./...
