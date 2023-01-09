@@ -109,9 +109,6 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
         }
     }
     d = Dataset{Name: name[0], Size: len(a), Documents: a, UploadedAt: time.Now()}
-
-} 
-
 	} else {
 		reader := csv.NewReader(file)
 		reader.Comma = '|'
