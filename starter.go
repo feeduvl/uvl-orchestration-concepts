@@ -93,22 +93,32 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 	// Process it
 	var d = Dataset{}
 	if name[1] == "xlsx" {
-    f, err := excelize.OpenReader(file)
-    handleErrorWithResponse(w, err, "Error reading xlsx file")
-    sheetName := f.GetSheetMap()[0]
-    rows, err := f.GetRows(sheetName)
-    handleErrorWithResponse(w, err, "Error reading xlsx rows")
+		f, err := excelize.OpenReader(file)
+		handleErrorWithResponse(w, err, "Error reading xlsx file")
+		sheetName := f.GetSheetList()[0]
+		cols, err := f.GetCols(sheetName)
+		handleErrorWithResponse(w, err, "Error reading xlsx columns")
 
-    var a []Document
-    for i, row := range rows {
-        if row[0] != "" {
-            var d = Document{i, row[0], strconv.Itoa(i)}
-            a = append(a, d)
-        } else {
-            break
-        }
-    }
-    d = Dataset{Name: name[0], Size: len(a), Documents: a, UploadedAt: time.Now()}
+		var a []Document
+		var ids = false
+		if len(cols) > 1 {
+			ids = true
+		}
+		for i, rowCell := range cols[0] {
+			var s string
+			if ids {
+				s = cols[1][i]
+			} else {
+				s = strconv.Itoa(i)
+			}
+			if rowCell != "" {
+				var d = Document{i, rowCell, s}
+				a = append(a, d)
+			} else {
+				break
+			}
+		}
+		d = Dataset{Name: name[0], Size: len(a), Documents: a, UploadedAt: time.Now()} 
 	} else {
 		reader := csv.NewReader(file)
 		reader.Comma = '|'
