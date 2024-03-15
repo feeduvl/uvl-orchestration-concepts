@@ -371,7 +371,9 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 	annotation.UploadedAt = time.Now()
 	annotation.Name = annotationName
 	annotation.Dataset = datasetName
-	annotation.ShowRecommendationtore = true
+	if !sentenceTokenisation_activated {
+		annotation.ShowRecommendationtore = true
+	}
 	annotation.SentenceTokenisation_activated = sentenceTokenisation_activated
 
 	err = RESTPostStoreAnnotation(annotation)
