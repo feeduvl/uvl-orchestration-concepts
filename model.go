@@ -45,6 +45,7 @@ type Annotation struct {
 
 	Tores 			  []string           `json:"tores" bson:"tores"`
 	ShowRecommendationtore	bool         `json:"show_recommendationtore" bson:"show_recommendationtore"`
+	SentenceTokenisation_activated	bool `json:"sentenceTokenisation_activated" bson:"sentenceTokenisation_activated"`
 	Docs              []DocWrapper       `json:"docs" bson:"docs"`
 	Tokens            []Token            `json:"tokens" bson:"tokens"`
 	Codes             []Code             `json:"codes" bson:"codes"`

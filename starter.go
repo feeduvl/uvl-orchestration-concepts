@@ -349,7 +349,12 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenizationJsonBytes, err := getNewAnnotation(w, datasetName)
+	sentenceTokenisation_activated, exist := body["sentenceTokenisation_activated"].(bool)
+	if !exist {
+        sentenceTokenisation_activated = false // defaultvalue
+    }
+
+	tokenizationJsonBytes, err := getNewAnnotation(w, datasetName, sentenceTokenisation_activated)
 	if err != nil {
 		fmt.Printf("Error getting tokenization, returning")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -367,6 +372,7 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 	annotation.Name = annotationName
 	annotation.Dataset = datasetName
 	annotation.ShowRecommendationtore = true
+	annotation.SentenceTokenisation_activated = sentenceTokenisation_activated
 
 	err = RESTPostStoreAnnotation(annotation)
 	if err != nil {
@@ -500,7 +506,7 @@ func exportAgreementAsAnnotation(w http.ResponseWriter, r *http.Request) {
 }
 
 // postAnnotationTokenize Tokenize a document and return the result
-func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error) {
+func getNewAnnotation(w http.ResponseWriter, datasetName string, sentenceTokenisation_activated bool) ([]byte, error) {
 	dataset, err := RESTGetDataset(datasetName)
 	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
 	if err != nil {
@@ -511,8 +517,13 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string) ([]byte, error)
 
 	requestBody := new(bytes.Buffer)
 
+	var data = map[string]interface{}{
+		"dataset":     dataset,
+		"sentenceTokenisation_activated": sentenceTokenisation_activated,
+	}
+
 	url := baseURL + endpointPostAnnotationTokenize
-	_ = json.NewEncoder(requestBody).Encode(dataset)
+	_ = json.NewEncoder(requestBody).Encode(data)
 	req, _ := createRequest(POST, url, requestBody)
 
 	res, err := client.Do(req)
