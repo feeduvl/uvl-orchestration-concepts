@@ -401,6 +401,7 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	}
 
 	agreementName := body["name"].(string)
+	sentenceTokenizationEnabledForAgreement := body["sentenceTokenizationEnabledForAgreement"].(bool)
 	datasetName := body["dataset"].(string)
 	if datasetName == "" {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
@@ -434,6 +435,7 @@ func makeNewAgreement(w http.ResponseWriter, r *http.Request) {
 	agreement.Name = agreementName
 	agreement.Dataset = datasetName
 	agreement.Annotations = annotationNames
+	agreement.SentenceTokenizationEnabledForAgreement = sentenceTokenizationEnabledForAgreement
 
 	// fill rest of fields
 	agreement.Docs = relevantAgreementFields.Docs
