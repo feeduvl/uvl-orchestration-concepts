@@ -349,12 +349,12 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sentenceTokenisation_activated, exist := body["sentenceTokenisation_activated"].(bool)
+	sentenceTokenizationEnabledForAnnotation, exist := body["sentenceTokenizationEnabledForAnnotation"].(bool)
 	if !exist {
-        sentenceTokenisation_activated = false // defaultvalue
+        sentenceTokenizationEnabledForAnnotation = false // defaultvalue
     }
 
-	tokenizationJsonBytes, err := getNewAnnotation(w, datasetName, sentenceTokenisation_activated)
+	tokenizationJsonBytes, err := getNewAnnotation(w, datasetName, sentenceTokenizationEnabledForAnnotation)
 	if err != nil {
 		fmt.Printf("Error getting tokenization, returning")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -371,10 +371,10 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 	annotation.UploadedAt = time.Now()
 	annotation.Name = annotationName
 	annotation.Dataset = datasetName
-	if !sentenceTokenisation_activated {
+	if !sentenceTokenizationEnabledForAnnotation {
 		annotation.ShowRecommendationtore = true
 	}
-	annotation.SentenceTokenisation_activated = sentenceTokenisation_activated
+	annotation.SentenceTokenizationEnabledForAnnotation = sentenceTokenizationEnabledForAnnotation
 
 	err = RESTPostStoreAnnotation(annotation)
 	if err != nil {
@@ -510,7 +510,7 @@ func exportAgreementAsAnnotation(w http.ResponseWriter, r *http.Request) {
 }
 
 // postAnnotationTokenize Tokenize a document and return the result
-func getNewAnnotation(w http.ResponseWriter, datasetName string, sentenceTokenisation_activated bool) ([]byte, error) {
+func getNewAnnotation(w http.ResponseWriter, datasetName string, sentenceTokenizationEnabledForAnnotation bool) ([]byte, error) {
 	dataset, err := RESTGetDataset(datasetName)
 	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
 	if err != nil {
@@ -523,7 +523,7 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string, sentenceTokenis
 
 	var data = map[string]interface{}{
 		"dataset":     dataset,
-		"sentenceTokenisation_activated": sentenceTokenisation_activated,
+		"sentenceTokenizationEnabledForAnnotation": sentenceTokenizationEnabledForAnnotation,
 	}
 
 	url := baseURL + endpointPostAnnotationTokenize
