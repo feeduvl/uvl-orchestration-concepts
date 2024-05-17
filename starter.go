@@ -281,8 +281,6 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	run.Params = params
 	run.Dataset = dataset
 
-	log.Printf("run dataset %v\n", dataset)
-
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
 	handleErrorWithResponse(w, err, "Error saving to database")
