@@ -184,8 +184,6 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 
 	_ = json.NewEncoder(requestBody).Encode(run)
 
-	log.Printf("request body %v\n", requestBody)
-
 	url := baseURL + endpointPostStartConceptDetection + run.Method + "/run"
 	if run.Method == "acceptance-criteria" {
 		url = baseURL + endpointPostStartAcceptanceCriteriaGeneration + run.Method + "/run"
