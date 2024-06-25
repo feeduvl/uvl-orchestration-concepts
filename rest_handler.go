@@ -21,12 +21,14 @@ const (
 	// analytics layer
 	endpointPostStartConceptDetection             = "/hitec/classify/concepts/"
 	endpointPostStartAcceptanceCriteriaGeneration = "/hitec/generate/"
+	endpointPostStartRelevanceClassification = "/hitec/classify/relevance/run"
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
 	endpointPostStoreGroundTruth     = "/hitec/repository/concepts/store/groundtruth/"
 	endpointPostStoreDetectionResult = "/hitec/repository/concepts/store/detection/result/"
 	endpointGetDataset               = "/hitec/repository/concepts/dataset/name/"
+
 	// annotation
 	endpointPostStoreAnnotation    = "/hitec/repository/concepts/store/annotation/"
 	endpointPostAnnotationTokenize = "/hitec/annotation/tokenize/"
@@ -176,6 +178,37 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 		return dataset, err
 	}
 	return dataset, err
+}
+
+func RESTPostStartRelevanceClassification(run Run) (map[string]interface{}, error) {
+    requestBody := new(bytes.Buffer)
+
+	_ = json.NewEncoder(requestBody).Encode(run)
+
+	log.Printf("PostStartRelevanceClassification requestBody: %s\n", requestBody)
+
+    url := baseURL + endpointPostStartRelevanceClassification
+
+    log.Printf("PostStartRelevanceClassification url: %s\n", url)
+
+    req, _ := createRequest(POST, url, requestBody)
+    res, err := client.Do(req)
+
+    if err != nil {
+		log.Printf("ERR creating request: %v\n", err)
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	var message map[string]interface{}
+	err = json.NewDecoder(res.Body).Decode(&message)
+	if err != nil {
+		log.Printf("ERR decoding response body: %v\n", err)
+		return nil, err
+	}
+
+	return message, nil
 }
 
 // RESTPostStartNewDetection returns Result ,err
