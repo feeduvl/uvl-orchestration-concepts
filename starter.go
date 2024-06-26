@@ -315,7 +315,19 @@ func postStartRelevanceClassification(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ERROR making RESTPostStartRelevanceClassification request: %v\n", err)
 		result.Status = "failed"
 		_ = RESTPostStoreResult(*result)
-		return
+
+        responseString := map[string]string{"message": "Creation failed!"}
+        
+        jsonResponseString, jsonErr := json.Marshal(responseString)
+        if jsonErr != nil {
+            log.Printf("ERROR marshalling response message to JSON: %v\n", jsonErr)
+            http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+            return
+        }
+
+		w.Header().Set("Content-Type", "application/json")
+        w.Write(jsonResponseString)
+        return
 	}
 
 	fmt.Printf("Relevance Classification Message Response: %v\n", message)
