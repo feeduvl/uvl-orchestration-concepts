@@ -185,7 +185,7 @@ func RESTPostStartRelevanceClassification(run Run) (map[string]interface{}, erro
 
 	_ = json.NewEncoder(requestBody).Encode(run)
 
-	log.Printf("PostStartRelevanceClassification requestBody: %s\n", requestBody)
+	// log.Printf("PostStartRelevanceClassification requestBody: %s\n", requestBody)
 
     url := baseURL + endpointPostStartRelevanceClassification
 
