@@ -22,6 +22,7 @@ const (
 	endpointPostStartConceptDetection             = "/hitec/classify/concepts/"
 	endpointPostStartAcceptanceCriteriaGeneration = "/hitec/generate/"
 	endpointPostStartRelevanceClassification = "/hitec/classify/relevance/run"
+	endpointPostStartSpellchecking = "/hitec/spellchecker/run"
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
@@ -185,11 +186,40 @@ func RESTPostStartRelevanceClassification(run Run) (map[string]interface{}, erro
 
 	_ = json.NewEncoder(requestBody).Encode(run)
 
-	// log.Printf("PostStartRelevanceClassification requestBody: %s\n", requestBody)
-
     url := baseURL + endpointPostStartRelevanceClassification
 
     log.Printf("PostStartRelevanceClassification url: %s\n", url)
+
+    req, _ := createRequest(POST, url, requestBody)
+    res, err := client.Do(req)
+
+    if err != nil {
+		log.Printf("ERR creating request: %v\n", err)
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	var message map[string]interface{}
+	err = json.NewDecoder(res.Body).Decode(&message)
+	if err != nil {
+		log.Printf("ERR decoding response body: %v\n", err)
+		return nil, err
+	}
+
+	return message, nil
+}
+
+func RESTPostStartSpellchecking(run Run) (map[string]interface{}, error) {
+    requestBody := new(bytes.Buffer)
+
+	_ = json.NewEncoder(requestBody).Encode(run)
+
+	log.Printf("RESTPostStartSpellchecking requestBody: %s\n", requestBody)
+
+    url := baseURL + endpointPostStartSpellchecking
+
+    log.Printf("RESTPostStartSpellchecking url: %s\n", url)
 
     req, _ := createRequest(POST, url, requestBody)
     res, err := client.Do(req)

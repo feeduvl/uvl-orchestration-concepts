@@ -52,6 +52,7 @@ func makeRouter() *mux.Router {
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/relevance/", postStartRelevanceClassification).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/spellchecker/", postStartSpellchecking).Methods("POST")
 	return router
 }
 
@@ -280,7 +281,7 @@ func postStartRelevanceClassification(w http.ResponseWriter, r *http.Request) {
 
 	newDatasetName, exists := params["new_dataset_name"]
 	if !exists {
-		fmt.Println("new_annotation_name key does not exist in params")
+		fmt.Println("new_dataset_name key does not exist in params")
 		return
 	}
 
@@ -349,6 +350,107 @@ func postStartRelevanceClassification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Write the response message back to the client
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(responseData)
+
+}
+
+func postStartSpellchecking(w http.ResponseWriter, r *http.Request) {
+
+	var body map[string]interface{}
+
+    err := json.NewDecoder(r.Body).Decode(&body)
+    if err != nil {
+        fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+        w.WriteHeader(http.StatusBadRequest)
+        return
+    }
+
+	runName := body["run_name"].(string)
+	methodName := body["method"].(string)
+    datasetName := body["original_dataset_name"].(string)
+
+	// Get Dataset from Database
+	dataset, err := RESTGetDataset(datasetName)
+	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
+    
+    // Get parameters
+    var params = make(map[string]string)
+    for key, value := range body {
+        s := fmt.Sprintf("%v", value)
+        params[key] = s
+    }
+
+	delete(params, "method")
+
+	run := new(Run)
+	run.Method = methodName
+	run.Params = params
+	run.Dataset = dataset
+
+	newDatasetName, exists := params["new_dataset_name"]
+	if !exists {
+		fmt.Println("new_dataset_name key does not exist in params")
+		return
+	}
+
+	if runName == "" {
+		// Generate a default name for the spellchecker run
+		var name string
+		name = fmt.Sprintf("Spellchecked:%s", newDatasetName)
+		runName = name
+	}
+
+	result := new(Result)
+	result.Method = methodName
+	result.DatasetName = dataset.Name
+	result.Status = "scheduled"
+	result.StartedAt = time.Now()
+	result.Params = params
+	result.Name = runName
+
+	// Store result object in database (prior to getting results)
+	err = RESTPostStoreResult(*result)
+	handleErrorWithResponse(w, err, "Error saving spellchecker result to database")
+
+    message, err := RESTPostStartSpellchecking(*run)
+	if err != nil {
+		log.Printf("ERROR making RESTPostStartSpellchecking request: %v\n", err)
+		result.Status = "failed"
+		_ = RESTPostStoreResult(*result)
+
+        responseString := map[string]string{"message": "Creation failed!"}
+        
+        jsonResponseString, jsonErr := json.Marshal(responseString)
+        if jsonErr != nil {
+            log.Printf("ERROR marshalling response message to JSON: %v\n", jsonErr)
+            http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+            return
+        }
+
+		w.Header().Set("Content-Type", "application/json")
+        w.Write(jsonResponseString)
+        return
+	}
+
+	fmt.Printf("Spellchecker Message Response: %v\n", message)
+
+	result.Status = "finished"
+
+	err = RESTPostStoreResult(*result)
+	if err != nil {
+		fmt.Printf("ERROR storing final spellchecker result %s\n", err)
+		panic(err)
+	}
+
+	// Convert the message map back to JSON
+	responseData, err := json.Marshal(message)
+	if err != nil {
+		log.Printf("ERROR marshalling response data: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(responseData)
 
