@@ -51,6 +51,7 @@ func makeRouter() *mux.Router {
 	router.HandleFunc("/hitec/orchestration/concepts/store/dataset/", postNewDataset).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/store/groundtruth/", postAddGroundTruth).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/detection/", postStartNewDetection).Methods("POST")
+	router.HandleFunc("/hitec/orchestration/concepts/multidetection/", postStartNewMultiDetection).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/relevance/", postStartRelevanceClassification).Methods("POST")
 	router.HandleFunc("/hitec/orchestration/concepts/spellchecker/", postStartSpellchecking).Methods("POST")
 	return router
@@ -506,6 +507,73 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	run.Method = method
 	run.Params = params
 	run.Dataset = dataset
+
+	// Store result object in database (prior to getting results)
+	err = RESTPostStoreResult(*result)
+	handleErrorWithResponse(w, err, "Error saving to database")
+
+	go _startNewDetection(result, run)
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})
+	return
+}
+
+func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
+
+	var body map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	datasetName := body["dataset"]
+	if datasetName == "" {
+		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	method := body["method"].(string)
+	fmt.Printf("postStartNewMultiDetection called. Method: %v, Dataset: %v\n", method, datasetName)
+
+	name := body["name"].(string)
+
+    var allDataSets []Dataset
+	// Get Datasets from Database
+	for _, dataset in datasetName{
+		dataset, err := RESTGetDataset(datasetName)
+		allDataSets = append(allDatasets, dataset)
+    	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
+	}
+
+
+	// Get parameters
+	var params = make(map[string]string)
+	for key, value := range body {
+		s := fmt.Sprintf("%v", value)
+		params[key] = s
+	}
+
+	delete(params, "method")
+	delete(params, "dataset")
+	delete(params, "name")
+
+	fmt.Printf("postStartNewDetection Params: %v\n", params)
+
+	result := new(Result)
+	result.Method = method
+	result.DatasetName = dataset.Name
+	result.Status = "scheduled"
+	result.StartedAt = time.Now()
+	result.Params = params
+	result.Name = name
+
+	run := new(Run)
+	run.Method = method
+	run.Params = params
+	run.Dataset = allDataSets
 
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
