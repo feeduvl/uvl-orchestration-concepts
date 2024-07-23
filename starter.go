@@ -542,9 +542,9 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 
     var allDataSets []Dataset
 	// Get Datasets from Database
-	for _, dataset in datasetName{
+	for _, dataset := range datasetName {
 		dataset, err := RESTGetDataset(datasetName)
-		allDataSets = append(allDatasets, dataset)
+		allDataSets = append(allDataSets, dataset)
     	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
 	}
 
