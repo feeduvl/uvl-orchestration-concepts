@@ -529,23 +529,25 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	datasetName := body["dataset"]
-	if datasetName == "" {
+	fmt.Printf("%+v\n", body)
+	//var datasetList []string
+	datasetList := body["dataset"]
+	if datasetList == "" {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	method := body["method"].(string)
-	fmt.Printf("postStartNewMultiDetection called. Method: %v, Dataset: %v\n", method, datasetName)
+	fmt.Printf("postStartNewMultiDetection called. Method: %v, Dataset: %v\n", method, datasetList)
 
 	name := body["name"].(string)
 
     var allDataSets []Dataset
 	// Get Datasets from Database
-	for _, dataset := range datasetName {
-		dataset, err := RESTGetDataset(datasetName)
-		allDataSets = append(allDataSets, dataset)
-    	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
+	//for _, datasetName := range datasetList {
+		dataset, err := RESTGetDataset(datasetList)
+	//	allDataSets = append(allDataSets, dataset)
+    //	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
 	}
 
 
