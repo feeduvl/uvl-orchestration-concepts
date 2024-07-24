@@ -121,7 +121,7 @@ func postNewDataset(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
-		d = Dataset{Name: name[0], Size: len(a), Documents: a, UploadedAt: time.Now()} 
+		d = Dataset{Name: name[0], Size: len(a), Documents: a, UploadedAt: time.Now()}
 	} else {
 		reader := csv.NewReader(file)
 		reader.Comma = '|'
@@ -235,30 +235,30 @@ func postAddGroundTruth(w http.ResponseWriter, r *http.Request) {
 
 func postStartRelevanceClassification(w http.ResponseWriter, r *http.Request) {
 
-    var body map[string]interface{}
+	var body map[string]interface{}
 
-    err := json.NewDecoder(r.Body).Decode(&body)
-    if err != nil {
-        fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	runName := body["run_name"].(string)
 	methodName := body["method"].(string)
-    datasetName := body["original_dataset_name"].(string)
+	datasetName := body["original_dataset_name"].(string)
 
 	// Get Dataset from Database
 	dataset, err := RESTGetDataset(datasetName)
 	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
-    
-    // Get parameters
-    var params = make(map[string]string)
-    for key, value := range body {
-        s := fmt.Sprintf("%v", value)
-        params[key] = s
-    }
-    delete(params, "original_dataset_name")
+
+	// Get parameters
+	var params = make(map[string]string)
+	for key, value := range body {
+		s := fmt.Sprintf("%v", value)
+		params[key] = s
+	}
+	delete(params, "original_dataset_name")
 	delete(params, "persist")
 	delete(params, "dataset_persist")
 	delete(params, "run_name")
@@ -312,24 +312,24 @@ func postStartRelevanceClassification(w http.ResponseWriter, r *http.Request) {
 	err = RESTPostStoreResult(*result)
 	handleErrorWithResponse(w, err, "Error saving relevance result to database")
 
-    message, err := RESTPostStartRelevanceClassification(*run)
+	message, err := RESTPostStartRelevanceClassification(*run)
 	if err != nil {
 		log.Printf("ERROR making RESTPostStartRelevanceClassification request: %v\n", err)
 		result.Status = "failed"
 		_ = RESTPostStoreResult(*result)
 
-        responseString := map[string]string{"message": "Creation failed!"}
-        
-        jsonResponseString, jsonErr := json.Marshal(responseString)
-        if jsonErr != nil {
-            log.Printf("ERROR marshalling response message to JSON: %v\n", jsonErr)
-            http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-            return
-        }
+		responseString := map[string]string{"message": "Creation failed!"}
+
+		jsonResponseString, jsonErr := json.Marshal(responseString)
+		if jsonErr != nil {
+			log.Printf("ERROR marshalling response message to JSON: %v\n", jsonErr)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
-        w.Write(jsonResponseString)
-        return
+		w.Write(jsonResponseString)
+		return
 	}
 
 	fmt.Printf("Relevance Classification Message Response: %v\n", message)
@@ -360,27 +360,27 @@ func postStartSpellchecking(w http.ResponseWriter, r *http.Request) {
 
 	var body map[string]interface{}
 
-    err := json.NewDecoder(r.Body).Decode(&body)
-    if err != nil {
-        fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		fmt.Printf("ERROR decoding body: %s, body: %v\n", err, r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	runName := body["run_name"].(string)
 	methodName := body["method"].(string)
-    datasetName := body["original_dataset_name"].(string)
+	datasetName := body["original_dataset_name"].(string)
 
 	// Get Dataset from Database
 	dataset, err := RESTGetDataset(datasetName)
 	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
-    
-    // Get parameters
-    var params = make(map[string]string)
-    for key, value := range body {
-        s := fmt.Sprintf("%v", value)
-        params[key] = s
-    }
+
+	// Get parameters
+	var params = make(map[string]string)
+	for key, value := range body {
+		s := fmt.Sprintf("%v", value)
+		params[key] = s
+	}
 
 	delete(params, "method")
 
@@ -414,24 +414,24 @@ func postStartSpellchecking(w http.ResponseWriter, r *http.Request) {
 	err = RESTPostStoreResult(*result)
 	handleErrorWithResponse(w, err, "Error saving spellchecker result to database")
 
-    message, err := RESTPostStartSpellchecking(*run)
+	message, err := RESTPostStartSpellchecking(*run)
 	if err != nil {
 		log.Printf("ERROR making RESTPostStartSpellchecking request: %v\n", err)
 		result.Status = "failed"
 		_ = RESTPostStoreResult(*result)
 
-        responseString := map[string]string{"message": "Creation failed!"}
-        
-        jsonResponseString, jsonErr := json.Marshal(responseString)
-        if jsonErr != nil {
-            log.Printf("ERROR marshalling response message to JSON: %v\n", jsonErr)
-            http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-            return
-        }
+		responseString := map[string]string{"message": "Creation failed!"}
+
+		jsonResponseString, jsonErr := json.Marshal(responseString)
+		if jsonErr != nil {
+			log.Printf("ERROR marshalling response message to JSON: %v\n", jsonErr)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
-        w.Write(jsonResponseString)
-        return
+		w.Write(jsonResponseString)
+		return
 	}
 
 	fmt.Printf("Spellchecker Message Response: %v\n", message)
@@ -531,7 +531,7 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("%+v\n", body)
 	//var datasetList []string
-	datasetList := body["dataset"]
+	datasetList := body["dataset"].(string)
 	if datasetList == "" {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
 		w.WriteHeader(http.StatusBadRequest)
@@ -542,14 +542,13 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 
 	name := body["name"].(string)
 
-    var allDataSets []Dataset
+	var allDataSets []Dataset
 	// Get Datasets from Database
 	//for _, datasetName := range datasetList {
-		dataset, err := RESTGetDataset(datasetList)
+	dataset, err := RESTGetDataset(datasetList)
 	//	allDataSets = append(allDataSets, dataset)
-    //	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
-	}
-
+	//	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
+	//}
 
 	// Get parameters
 	var params = make(map[string]string)
@@ -647,8 +646,8 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 
 	sentenceTokenizationEnabledForAnnotation, exist := body["sentenceTokenizationEnabledForAnnotation"].(bool)
 	if !exist {
-        sentenceTokenizationEnabledForAnnotation = false // defaultvalue
-    }
+		sentenceTokenizationEnabledForAnnotation = false // defaultvalue
+	}
 
 	tokenizationJsonBytes, err := getNewAnnotation(w, datasetName, sentenceTokenizationEnabledForAnnotation)
 	if err != nil {
@@ -818,7 +817,7 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string, sentenceTokeniz
 	requestBody := new(bytes.Buffer)
 
 	var data = map[string]interface{}{
-		"dataset":     dataset,
+		"dataset": dataset,
 		"sentenceTokenizationEnabledForAnnotation": sentenceTokenizationEnabledForAnnotation,
 	}
 
@@ -850,7 +849,7 @@ func getNewAnnotation(w http.ResponseWriter, datasetName string, sentenceTokeniz
 	return b, nil
 }
 
-//  refresh statistics of an existing agreement
+// refresh statistics of an existing agreement
 func refreshStatisticsOfAgreement(w http.ResponseWriter, r *http.Request) {
 	var agreement Agreement
 	err := json.NewDecoder(r.Body).Decode(&agreement)
