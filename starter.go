@@ -574,7 +574,7 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	run := new(Run)
 	run.Method = method
 	run.Params = params
-	run.Dataset = allDataSets
+	run.Dataset = dataset //allDataSets
 
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
