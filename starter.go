@@ -763,7 +763,8 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(body)
 	annotationName := body["name"].(string)
-	datasetName := body["dataset"].(string)
+	//datasetName := body["dataset"].(string)
+	datasetName := "test"
 	if datasetName == "" {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
 		w.WriteHeader(http.StatusBadRequest)
