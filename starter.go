@@ -19,8 +19,6 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
 )
 
 const (
@@ -661,18 +659,19 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	var datasets = strings.Split(datasetList, "#!#")
 	method := body["method"].(string)
 	fmt.Printf("postStartNewMultiDetection called. Method: %v, Dataset: %v\n", method, datasetList)
 
 	name := body["name"].(string)
 
-	//var allDataSets []Dataset
+	var allDataSets Dataset
 	// Get Datasets from Database
-	//for _, datasetName := range datasetList {
-	dataset, err := RESTGetDataset(datasetList)
-	//	allDataSets = append(allDataSets, dataset)
-	//	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
-	//}
+	for _, datasetName := range datasets {
+		dataset, err := RESTGetDataset(datasetName)
+		allDataSets.Documents = append(allDataSets.Documents, dataset.Documents...)
+		handleErrorWithResponse(w, err, "ERROR retrieving dataset "+datasetName)
+	}
 
 	// Get parameters
 	var params = make(map[string]string)
@@ -689,7 +688,7 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 
 	result := new(Result)
 	result.Method = method
-	result.DatasetName = dataset.Name
+	result.DatasetName = datasets[0].Name
 	result.Status = "scheduled"
 	result.StartedAt = time.Now()
 	result.Params = params
@@ -698,7 +697,7 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	run := new(Run)
 	run.Method = method
 	run.Params = params
-	run.Dataset = dataset //allDataSets
+	run.Dataset = allDataSets
 
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
@@ -732,6 +731,7 @@ func _startNewDetection(result *Result, run *Run) {
 	// Store results in database
 	fmt.Printf("Response received, Topics: %s\n", endResult.Topics)
 	fmt.Printf("Response received, Codes: %s\n", endResult.Codes)
+	fmt.Printf("%#v", endResult)
 	err = RESTPostStoreResult(endResult)
 	if err != nil {
 		fmt.Printf("ERROR storing final result %s\n", err)
