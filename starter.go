@@ -665,7 +665,7 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	method := body["method"].(string)
 	fmt.Printf("postStartNewMultiDetection called. Method: %v, Dataset: %v\n", method, datasetList)
 
-	name := body["name"].(string)
+	name := body["name"].(string) //TODO: Check if nil
 
 	var allDataSets Dataset
 	// Get Datasets from Database

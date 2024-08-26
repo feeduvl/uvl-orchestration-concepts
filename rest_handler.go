@@ -175,6 +175,7 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 	}
 	// parse result
 	err = json.NewDecoder(res.Body).Decode(&dataset)
+	log.Println(dataset)
 	if err != nil {
 		log.Printf("ERR parsing dataset %v\n", err)
 		return dataset, err
