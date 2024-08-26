@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,8 +22,8 @@ const (
 	// analytics layer
 	endpointPostStartConceptDetection             = "/hitec/classify/concepts/"
 	endpointPostStartAcceptanceCriteriaGeneration = "/hitec/generate/"
-	endpointPostStartRelevanceClassification = "/hitec/classify/relevance/run"
-	endpointPostStartSpellchecking = "/hitec/spellchecker/run"
+	endpointPostStartRelevanceClassification      = "/hitec/classify/relevance/run"
+	endpointPostStartSpellchecking                = "/hitec/spellchecker/run"
 
 	// storage layer
 	endpointPostStoreDataset         = "/hitec/repository/concepts/store/dataset/"
@@ -182,18 +183,18 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 }
 
 func RESTPostStartRelevanceClassification(run Run) (map[string]interface{}, error) {
-    requestBody := new(bytes.Buffer)
+	requestBody := new(bytes.Buffer)
 
 	_ = json.NewEncoder(requestBody).Encode(run)
 
-    url := baseURL + endpointPostStartRelevanceClassification
+	url := baseURL + endpointPostStartRelevanceClassification
 
-    log.Printf("PostStartRelevanceClassification url: %s\n", url)
+	log.Printf("PostStartRelevanceClassification url: %s\n", url)
 
-    req, _ := createRequest(POST, url, requestBody)
-    res, err := client.Do(req)
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
 
-    if err != nil {
+	if err != nil {
 		log.Printf("ERR creating request: %v\n", err)
 		return nil, err
 	}
@@ -211,20 +212,20 @@ func RESTPostStartRelevanceClassification(run Run) (map[string]interface{}, erro
 }
 
 func RESTPostStartSpellchecking(run Run) (map[string]interface{}, error) {
-    requestBody := new(bytes.Buffer)
+	requestBody := new(bytes.Buffer)
 
 	_ = json.NewEncoder(requestBody).Encode(run)
 
 	log.Printf("RESTPostStartSpellchecking requestBody: %s\n", requestBody)
 
-    url := baseURL + endpointPostStartSpellchecking
+	url := baseURL + endpointPostStartSpellchecking
 
-    log.Printf("RESTPostStartSpellchecking url: %s\n", url)
+	log.Printf("RESTPostStartSpellchecking url: %s\n", url)
 
-    req, _ := createRequest(POST, url, requestBody)
-    res, err := client.Do(req)
+	req, _ := createRequest(POST, url, requestBody)
+	res, err := client.Do(req)
 
-    if err != nil {
+	if err != nil {
 		log.Printf("ERR creating request: %v\n", err)
 		return nil, err
 	}
@@ -266,6 +267,7 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	}(res.Body)
 
 	_res := new(Result)
+	fmt.Println(_res)
 	err = json.NewDecoder(res.Body).Decode(&_res)
 	if err != nil {
 		log.Printf("ERR parsing response %v\n", err)
