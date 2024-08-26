@@ -761,7 +761,7 @@ func makeNewAnnotation(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
+	fmt.Printf("%+v\n", body)
 	annotationName := body["name"].(string)
 	datasetName := body["dataset"].(string)
 	if datasetName == "" {
