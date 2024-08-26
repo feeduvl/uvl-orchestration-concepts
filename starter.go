@@ -688,7 +688,7 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 
 	result := new(Result)
 	result.Method = method
-	result.DatasetName = datasets[0].Name
+	result.DatasetName = datasetList
 	result.Status = "scheduled"
 	result.StartedAt = time.Now()
 	result.Params = params
