@@ -722,7 +722,7 @@ func _startNewDetection(result *Result, run *Run) {
 
 	// Call detection MS
 	fmt.Printf("_startNewDetection, calling MS and waiting for response\n")
-	fmt.Println(*result)
+	fmt.Println(*run)
 	endResult, err := RESTPostStartNewDetection(*result, *run)
 	if err != nil {
 		fmt.Printf("ERROR with detection %s\n", err)
