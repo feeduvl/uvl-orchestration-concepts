@@ -671,12 +671,14 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	name := body["name"].(string) //TODO: Check if nil
 
 	var allDataSets Dataset
+	allDataSets.Name = datasetList
 	// Get Datasets from Database
 	for _, datasetName := range datasets {
 		dataset, err := RESTGetDataset(datasetName)
 		allDataSets.Documents = append(allDataSets.Documents, dataset.Documents...)
 		handleErrorWithResponse(w, err, "ERROR retrieving dataset "+datasetName)
 	}
+	allDataSets.Size = len(allDataSets.Documents)
 
 	// Get parameters
 	var params = make(map[string]string)
