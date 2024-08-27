@@ -590,7 +590,8 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
+	fmt.Println("body: ")
+	fmt.Printf("%+v\n", body)
 	datasetName := body["dataset"].(string)
 	if datasetName == "" {
 		_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Cannot start detection with no dataset."})
@@ -652,7 +653,7 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
+	fmt.Println("body: ")
 	fmt.Printf("%+v\n", body)
 	//var datasetList []string
 	datasetList := body["dataset"].(string)
@@ -700,7 +701,9 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	run.Method = method
 	run.Params = params
 	run.Dataset = allDataSets
-
+	fmt.Printf("params")
+	fmt.Println(run)
+	fmt.Println(params)
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
 	handleErrorWithResponse(w, err, "Error saving to database")
