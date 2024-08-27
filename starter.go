@@ -632,7 +632,9 @@ func postStartNewDetection(w http.ResponseWriter, r *http.Request) {
 	run.Method = method
 	run.Params = params
 	run.Dataset = dataset
-
+	fmt.Println("params")
+	fmt.Println(run)
+	fmt.Println(params)
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
 	handleErrorWithResponse(w, err, "Error saving to database")
@@ -701,15 +703,15 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	run.Method = method
 	run.Params = params
 	run.Dataset = allDataSets
-	fmt.Printf("params")
+	fmt.Println("params")
 	fmt.Println(run)
 	fmt.Println(params)
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
 	handleErrorWithResponse(w, err, "Error saving to database")
-	fmt.Printf("result")
+	fmt.Println("result")
 	fmt.Println(result)
-	fmt.Printf("---")
+	fmt.Println("---")
 	go _startNewDetection(result, run)
 
 	w.WriteHeader(http.StatusOK)
