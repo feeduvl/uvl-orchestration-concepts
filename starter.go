@@ -704,7 +704,9 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	// Store result object in database (prior to getting results)
 	err = RESTPostStoreResult(*result)
 	handleErrorWithResponse(w, err, "Error saving to database")
-
+	fmt.Printf("result")
+	fmt.Println(result)
+	fmt.Printf("---")
 	go _startNewDetection(result, run)
 
 	w.WriteHeader(http.StatusOK)
@@ -720,6 +722,7 @@ func _startNewDetection(result *Result, run *Run) {
 
 	// Call detection MS
 	fmt.Printf("_startNewDetection, calling MS and waiting for response\n")
+	fmt.Println(*result)
 	endResult, err := RESTPostStartNewDetection(*result, *run)
 	if err != nil {
 		fmt.Printf("ERROR with detection %s\n", err)
