@@ -254,6 +254,8 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 		url = baseURL + endpointPostStartAcceptanceCriteriaGeneration + run.Method + "/run"
 	}
 	log.Printf("PostStartNewDetection url: %s\n", url)
+	log.Printf(requestBody.String())
+	log.Printf("request Body")
 	req, _ := createRequest(POST, url, requestBody)
 	res, err := client.Do(req)
 	if err != nil {
