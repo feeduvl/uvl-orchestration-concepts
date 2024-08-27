@@ -942,6 +942,59 @@ func exportAgreementAsAnnotation(w http.ResponseWriter, r *http.Request) {
 
 // postAnnotationTokenize Tokenize a document and return the result
 func getNewAnnotation(w http.ResponseWriter, datasetName string, sentenceTokenizationEnabledForAnnotation bool) ([]byte, error) {
+	var datasets = strings.Split(datasetName, "#!#")
+	var allDataSets Dataset
+	allDataSets.Name = datasetName
+	// Get Datasets from Database
+	for _, datasetName := range datasets {
+		dataset, err := RESTGetDataset(datasetName)
+		allDataSets.Documents = append(allDataSets.Documents, dataset.Documents...)
+		handleErrorWithResponse(w, err, "ERROR retrieving dataset "+datasetName)
+		if err != nil {
+			return *new([]byte), err
+		}
+	}
+	allDataSets.Size = len(allDataSets.Documents)
+
+	log.Printf("Tokenizing: " + datasetName)
+
+	requestBody := new(bytes.Buffer)
+
+	var data = map[string]interface{}{
+		"dataset": allDataSets,
+		"sentenceTokenizationEnabledForAnnotation": sentenceTokenizationEnabledForAnnotation,
+	}
+
+	url := baseURL + endpointPostAnnotationTokenize
+	_ = json.NewEncoder(requestBody).Encode(data)
+	req, _ := createRequest(POST, url, requestBody)
+
+	res, err := client.Do(req)
+
+	defer res.Body.Close()
+
+	if err != nil {
+		log.Printf("ERR getting tokens for annotation %v\n", err)
+		log.Printf("Note: If the request timed out, the method microservice may take too long to process the" +
+			" request. Consider increasing timeout in rest_handler->getHTTPClient.")
+		return *new([]byte), err
+	}
+
+	w.WriteHeader(res.StatusCode)
+
+	b, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		log.Fatalln(err)
+		return *new([]byte), err
+	}
+
+	log.Printf("Got response: " + string(b))
+	return b, nil
+}
+
+// postAnnotationTokenize Tokenize a document and return the result
+func getNewSingleAnnotation(w http.ResponseWriter, datasetName string, sentenceTokenizationEnabledForAnnotation bool) ([]byte, error) {
 	dataset, err := RESTGetDataset(datasetName)
 	handleErrorWithResponse(w, err, "ERROR retrieving dataset")
 	if err != nil {
