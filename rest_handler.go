@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -175,7 +174,7 @@ func RESTGetDataset(datasetName string) (Dataset, error) {
 	}
 	// parse result
 	err = json.NewDecoder(res.Body).Decode(&dataset)
-	log.Println(dataset)
+
 	if err != nil {
 		log.Printf("ERR parsing dataset %v\n", err)
 		return dataset, err
@@ -270,7 +269,7 @@ func RESTPostStartNewDetection(result Result, run Run) (Result, error) {
 	}(res.Body)
 
 	_res := new(Result)
-	fmt.Println(_res)
+
 	err = json.NewDecoder(res.Body).Decode(&_res)
 	if err != nil {
 		log.Printf("ERR parsing response %v\n", err)
