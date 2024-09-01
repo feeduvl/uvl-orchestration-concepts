@@ -711,10 +711,10 @@ func postStartNewMultiDetection(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("result")
 	fmt.Println(result)
 	fmt.Println("---")
-	go _startNewDetection(result, run)
+	_startNewDetection(result, run)
 
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection started"})
+	_ = json.NewEncoder(w).Encode(ResponseMessage{Status: true, Message: "Detection finished"})
 	return
 }
 
